@@ -4,12 +4,14 @@ import 'package:flutter_screenutil/flutter_screenutil.dart';
 
 import 'package:fund_manager/core/widgets/responsive_widget.dart';
 import 'package:fund_manager/core/widgets/custom_button.dart';
+import 'package:fund_manager/core/widgets/fund_card.dart';
 import 'package:fund_manager/core/navigation/app_router.dart';
 import 'package:fund_manager/core/utils/format_utils.dart';
 import 'package:fund_manager/core/blocs/app_bloc.dart';
 import 'package:fund_manager/features/funds/presentation/blocs/funds_bloc.dart';
 import 'package:fund_manager/features/funds/domain/models/user_fund.dart';
 import 'package:fund_manager/features/funds/domain/models/user.dart';
+import 'package:fund_manager/features/funds/domain/models/fund.dart';
 import 'package:fund_manager/features/funds/domain/services/user_funds_service.dart';
 import 'package:fund_manager/features/funds/domain/services/notification_service.dart';
 
@@ -40,60 +42,72 @@ class _MyFundsViewState extends State<MyFundsView> {
   @override
   void initState() {
     super.initState();
-    // Cargar datos del usuario y sus fondos
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      context.read<FundsBloc>().add(const FundsLoadUserData());
-      context.read<FundsBloc>().add(const FundsLoadUserFunds());
-      context.read<FundsBloc>().add(const FundsLoadTransactionHistory());
-    });
+    // Los datos del usuario ya están cargados en AppBloc
   }
 
   @override
   Widget build(BuildContext context) {
-    return BlocBuilder<FundsBloc, FundsState>(
-      builder: (context, state) {
-        return Scaffold(
-          appBar: AppBar(
-            title: const Text('Mis Fondos'),
-            backgroundColor: Theme.of(context).primaryColor,
-            foregroundColor: Colors.white,
-            actions: [
-              IconButton(
-                icon: const Icon(Icons.refresh),
-                onPressed: () {
-                  context.read<FundsBloc>().add(const FundsRefresh());
-                },
-                tooltip: 'Actualizar',
+    return BlocListener<AppBloc, AppState>(
+      listener: (context, state) {
+        if (state is AppLoaded) {
+          // Mostrar mensajes de error si existen
+          if (state.errorMessage != null && state.errorMessage!.isNotEmpty) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(
+                content: Text(state.errorMessage!),
+                backgroundColor: Colors.red,
+                duration: const Duration(seconds: 4),
               ),
-              IconButton(
-                icon: const Icon(Icons.account_balance),
-                onPressed: () {
-                  context
-                      .read<AppBloc>()
-                      .add(const AppNavigateTo(AppRoute.funds));
-                },
-                tooltip: 'Ver Fondos Disponibles',
-              ),
-              IconButton(
-                icon: const Icon(Icons.history),
-                onPressed: () => _showTransactionHistory(context),
-                tooltip: 'Historial de Transacciones',
-              ),
-            ],
-          ),
-          body: state is FundsLoading
-              ? const Center(child: CircularProgressIndicator())
-              : state is FundsLoaded
-                  ? _buildContent(context, state)
-                  : state is FundsError
-                      ? Center(child: Text('Error: ${state.message}'))
-                      : const Center(child: Text('Cargando...')),
-        );
+            );
+          }
+        }
       },
+      child: BlocBuilder<FundsBloc, FundsState>(
+        builder: (context, state) {
+          return Scaffold(
+            appBar: AppBar(
+              title: const Text('Mis Fondos'),
+              backgroundColor: Theme.of(context).primaryColor,
+              foregroundColor: Colors.white,
+              actions: [
+                IconButton(
+                  icon: const Icon(Icons.refresh),
+                  onPressed: () {
+                    context.read<FundsBloc>().add(const FundsRefresh());
+                  },
+                  tooltip: 'Actualizar',
+                ),
+                IconButton(
+                  icon: const Icon(Icons.account_balance),
+                  onPressed: () {
+                    context
+                        .read<AppBloc>()
+                        .add(const AppNavigateTo(AppRoute.funds));
+                  },
+                  tooltip: 'Ver Fondos Disponibles',
+                ),
+                IconButton(
+                  icon: const Icon(Icons.history),
+                  onPressed: () => _showTransactionHistory(context),
+                  tooltip: 'Historial de Transacciones',
+                ),
+              ],
+            ),
+            body: BlocBuilder<AppBloc, AppState>(
+              builder: (context, appState) {
+                if (appState is AppLoaded) {
+                  return _buildContent(context, appState);
+                }
+                return const Center(child: CircularProgressIndicator());
+              },
+            ),
+          );
+        },
+      ),
     );
   }
 
-  Widget _buildContent(BuildContext context, FundsLoaded state) {
+  Widget _buildContent(BuildContext context, AppLoaded state) {
     return ResponsiveWidget(
       mobile: _buildMobileLayout(context, state),
       tablet: _buildTabletLayout(context, state),
@@ -101,7 +115,7 @@ class _MyFundsViewState extends State<MyFundsView> {
     );
   }
 
-  Widget _buildMobileLayout(BuildContext context, FundsLoaded state) {
+  Widget _buildMobileLayout(BuildContext context, AppLoaded state) {
     return SingleChildScrollView(
       padding: EdgeInsets.all(16.w),
       child: Column(
@@ -111,13 +125,13 @@ class _MyFundsViewState extends State<MyFundsView> {
           ResponsiveSpacing(mobileSpacing: 16.h),
           _buildBalanceCard(context, state.currentUser),
           ResponsiveSpacing(mobileSpacing: 16.h),
-          _buildUserFundsList(context, state.userFunds),
+          _buildUserFundsList(context, state.userFunds, state),
         ],
       ),
     );
   }
 
-  Widget _buildTabletLayout(BuildContext context, FundsLoaded state) {
+  Widget _buildTabletLayout(BuildContext context, AppLoaded state) {
     return Row(
       children: [
         Expanded(
@@ -136,13 +150,13 @@ class _MyFundsViewState extends State<MyFundsView> {
         ),
         Expanded(
           flex: 2,
-          child: _buildUserFundsList(context, state.userFunds),
+          child: _buildUserFundsList(context, state.userFunds, state),
         ),
       ],
     );
   }
 
-  Widget _buildDesktopLayout(BuildContext context, FundsLoaded state) {
+  Widget _buildDesktopLayout(BuildContext context, AppLoaded state) {
     return Row(
       children: [
         Expanded(
@@ -161,7 +175,7 @@ class _MyFundsViewState extends State<MyFundsView> {
         ),
         Expanded(
           flex: 3,
-          child: _buildUserFundsList(context, state.userFunds),
+          child: _buildUserFundsList(context, state.userFunds, state),
         ),
       ],
     );
@@ -268,7 +282,8 @@ class _MyFundsViewState extends State<MyFundsView> {
     );
   }
 
-  Widget _buildUserFundsList(BuildContext context, List<UserFund> userFunds) {
+  Widget _buildUserFundsList(
+      BuildContext context, List<UserFund> userFunds, AppLoaded state) {
     if (userFunds.isEmpty) {
       return Center(
         child: Column(
@@ -310,160 +325,39 @@ class _MyFundsViewState extends State<MyFundsView> {
       );
     }
 
-    return ListView.builder(
-      padding: EdgeInsets.all(16.w),
-      itemCount: userFunds.length,
-      itemBuilder: (context, index) {
-        final userFund = userFunds[index];
-        return _buildUserFundCard(context, userFund);
-      },
-    );
-  }
-
-  Widget _buildUserFundCard(BuildContext context, UserFund userFund) {
-    return Card(
-      margin: EdgeInsets.only(bottom: 16.h),
-      elevation: 2,
-      child: Padding(
-        padding: EdgeInsets.all(16.w),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Row(
-              children: [
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        userFund.fundName,
-                        style: TextStyle(
-                          fontSize: 16.sp,
-                          fontWeight: FontWeight.bold,
-                        ),
-                      ),
-                      SizedBox(height: 4.h),
-                      Container(
-                        padding: EdgeInsets.symmetric(
-                            horizontal: 8.w, vertical: 4.h),
-                        decoration: BoxDecoration(
-                          color:
-                              FormatUtils.getCategoryColor(userFund.category),
-                          borderRadius: BorderRadius.circular(12.r),
-                        ),
-                        child: Text(
-                          userFund.category,
-                          style: TextStyle(
-                            fontSize: 12.sp,
-                            color: Colors.white,
-                            fontWeight: FontWeight.w500,
-                          ),
-                        ),
-                      ),
-                    ],
-                  ),
+    return BlocBuilder<FundsBloc, FundsState>(
+      builder: (context, fundsState) {
+        if (fundsState is FundsLoaded) {
+          return ListView.builder(
+            padding: EdgeInsets.all(16.w),
+            itemCount: userFunds.length,
+            itemBuilder: (context, index) {
+              final userFund = userFunds[index];
+              // Buscar el fondo completo en el estado
+              final fund = fundsState.allFunds.firstWhere(
+                (f) => f.id.toString() == userFund.fundId,
+                orElse: () => Fund(
+                  id: int.tryParse(userFund.fundId) ?? 0,
+                  name: userFund.fundName,
+                  type: 'FIC',
+                  category: userFund.category,
+                  minAmount: userFund.investedAmount.round(),
+                  value: userFund.currentValue,
+                  performance: userFund.performance,
+                  risk: 'Medio',
+                  status: 'Activo',
                 ),
-                IconButton(
-                  icon: const Icon(Icons.cancel, color: Colors.red),
-                  onPressed: () => _showCancelFundDialog(context, userFund),
-                  tooltip: 'Cancelar Fondo',
-                ),
-              ],
-            ),
-            SizedBox(height: 12.h),
-            Row(
-              children: [
-                Expanded(
-                  child: _buildFundStat(
-                    'Monto Invertido',
-                    '\$${userFund.investedAmount.toStringAsFixed(0)}',
-                    Icons.attach_money,
-                  ),
-                ),
-                Expanded(
-                  child: _buildFundStat(
-                    'Valor Actual',
-                    '\$${userFund.currentValue.toStringAsFixed(0)}',
-                    Icons.trending_up,
-                  ),
-                ),
-                Expanded(
-                  child: _buildFundStat(
-                    'Rendimiento',
-                    '${userFund.performance.toStringAsFixed(2)}%',
-                    Icons.analytics,
-                    color:
-                        userFund.performance >= 0 ? Colors.green : Colors.red,
-                  ),
-                ),
-              ],
-            ),
-            SizedBox(height: 8.h),
-            Text(
-              'Suscrito el ${FormatUtils.formatDate(userFund.subscriptionDate)}',
-              style: TextStyle(
-                fontSize: 12.sp,
-                color: Colors.grey[600],
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-
-  Widget _buildFundStat(String label, String value, IconData icon,
-      {Color? color}) {
-    return Column(
-      children: [
-        Icon(icon, size: 20.sp, color: color ?? Colors.grey[600]),
-        SizedBox(height: 4.h),
-        Text(
-          value,
-          style: TextStyle(
-            fontSize: 14.sp,
-            fontWeight: FontWeight.bold,
-            color: color,
-          ),
-        ),
-        Text(
-          label,
-          style: TextStyle(
-            fontSize: 12.sp,
-            color: Colors.grey[600],
-          ),
-        ),
-      ],
-    );
-  }
-
-  void _showCancelFundDialog(BuildContext context, UserFund userFund) {
-    showDialog(
-      context: context,
-      builder: (context) => AlertDialog(
-        title: const Text('Cancelar Fondo'),
-        content: Text(
-          '¿Estás seguro de que quieres cancelar tu participación en "${userFund.fundName}"?\n\n'
-          'Recibirás \$${userFund.currentValue.toStringAsFixed(0)} en tu saldo.',
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.of(context).pop(),
-            child: const Text('Cancelar'),
-          ),
-          ElevatedButton(
-            onPressed: () {
-              Navigator.of(context).pop();
-              context.read<FundsBloc>().add(FundsCancelFund(userFund));
+              );
+              return FundCard(
+                fund: fund,
+                userFund: userFund,
+                showActions: true,
+              );
             },
-            style: ElevatedButton.styleFrom(
-              backgroundColor: Colors.red,
-              foregroundColor: Colors.white,
-            ),
-            child: const Text('Confirmar'),
-          ),
-        ],
-      ),
+          );
+        }
+        return const Center(child: CircularProgressIndicator());
+      },
     );
   }
 

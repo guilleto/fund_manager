@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:fund_manager/features/funds/presentation/pages/fund_details_page.dart';
 
 import '../constants/app_constants.dart';
 import '../blocs/app_bloc.dart';
@@ -14,6 +15,7 @@ enum AppRoute {
   dashboard,
   funds,
   myFunds,
+  fundDetails,
 }
 
 // Clase para manejar la información de la ruta
@@ -45,6 +47,8 @@ class AppRouteInformationParser extends RouteInformationParser<RouteInfo> {
         return const RouteInfo(route: AppRoute.funds);
       case '/my-funds':
         return const RouteInfo(route: AppRoute.myFunds);
+      case '/fund-details':
+        return const RouteInfo(route: AppRoute.fundDetails);
       default:
         return const RouteInfo(route: AppRoute.welcome);
     }
@@ -61,6 +65,8 @@ class AppRouteInformationParser extends RouteInformationParser<RouteInfo> {
         return RouteInformation(uri: Uri.parse('/funds'));
       case AppRoute.myFunds:
         return RouteInformation(uri: Uri.parse('/my-funds'));
+      case AppRoute.fundDetails:
+        return RouteInformation(uri: Uri.parse('/fund-details'));
     }
   }
 }
@@ -131,6 +137,14 @@ class AppRouterDelegate extends RouterDelegate<RouteInfo>
           const MaterialPage(
             key: ValueKey('my-funds'),
             child: MyFundsPage(),
+          ),
+        ];
+      case AppRoute.fundDetails:
+        final fund = _currentConfiguration.arguments?['fund'];
+        return [
+          MaterialPage(
+            key: ValueKey('fund-details'),
+            child: FundDetailsPage(fund: fund),
           ),
         ];
     }
