@@ -2,20 +2,32 @@ import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
-import '../../../../core/widgets/custom_button.dart';
-import '../../../../core/widgets/responsive_widget.dart';
-import '../../../../core/navigation/app_router.dart';
-import '../../../../core/di/injection.dart';
-import '../blocs/welcome_bloc.dart';
+import 'package:fund_manager/core/widgets/custom_button.dart';
+import 'package:fund_manager/core/widgets/responsive_widget.dart';
+import 'package:fund_manager/core/navigation/app_router.dart';
+import 'package:fund_manager/features/welcome/presentation/blocs/welcome_bloc.dart';
+import 'package:fund_manager/core/blocs/app_bloc.dart';
 
-class WelcomePage extends StatefulWidget {
+class WelcomePage extends StatelessWidget {
   const WelcomePage({super.key});
 
   @override
-  State<WelcomePage> createState() => _WelcomePageState();
+  Widget build(BuildContext context) {
+    return BlocProvider(
+      create: (context) => WelcomeBloc()..add(const WelcomeStarted()),
+      child: const WelcomeView(),
+    );
+  }
 }
 
-class _WelcomePageState extends State<WelcomePage>
+class WelcomeView extends StatefulWidget {
+  const WelcomeView({super.key});
+
+  @override
+  State<WelcomeView> createState() => _WelcomeViewState();
+}
+
+class _WelcomeViewState extends State<WelcomeView>
     with TickerProviderStateMixin {
   late AnimationController _fadeController;
   late AnimationController _slideController;
@@ -27,19 +39,19 @@ class _WelcomePageState extends State<WelcomePage>
   @override
   void initState() {
     super.initState();
-    
+
     // Controlador para animación de fade
     _fadeController = AnimationController(
       duration: const Duration(milliseconds: 1500),
       vsync: this,
     );
-    
+
     // Controlador para animación de slide
     _slideController = AnimationController(
       duration: const Duration(milliseconds: 1200),
       vsync: this,
     );
-    
+
     // Controlador para animación de scale
     _scaleController = AnimationController(
       duration: const Duration(milliseconds: 800),
@@ -78,25 +90,14 @@ class _WelcomePageState extends State<WelcomePage>
   void _startAnimations() async {
     // Iniciar fade
     _fadeController.forward();
-    
-    // Esperar un poco y iniciar slide
-    await Future.delayed(const Duration(milliseconds: 300));
-    _slideController.forward();
-    
-    // Esperar un poco y iniciar scale
-    await Future.delayed(const Duration(milliseconds: 200));
-    _scaleController.forward();
-  }
 
-  void _navigateToDashboard() async {
-    // Animación de salida hacia arriba con fade
-    await _fadeController.reverse();
-    await _slideController.animateTo(0.0, curve: Curves.easeIn);
-    
-    // Notificar al BLoC para que maneje la navegación
-    if (mounted) {
-      context.read<WelcomeBloc>().add(const WelcomeNavigateToDashboard());
-    }
+    // Esperar un poco y iniciar slide
+    await Future.delayed(const Duration(milliseconds: 100));
+    _slideController.forward();
+
+    // Esperar un poco y iniciar scale
+    await Future.delayed(const Duration(milliseconds: 100));
+    _scaleController.forward();
   }
 
   @override
@@ -109,22 +110,11 @@ class _WelcomePageState extends State<WelcomePage>
 
   @override
   Widget build(BuildContext context) {
-    return BlocProvider(
-      create: (context) => getIt<WelcomeBloc>()..add(const WelcomeStarted()),
-      child: BlocListener<WelcomeBloc, WelcomeState>(
-        listener: (context, state) {
-          if (state is WelcomeLoaded && state.isNavigating) {
-            // Navegar al dashboard cuando el estado indique que debe navegar
-            AppRouter.goToDashboard();
-          }
-        },
-        child: Scaffold(
-          body: ResponsiveWidget(
-            mobile: _buildMobileLayout(),
-            tablet: _buildTabletLayout(),
-            desktop: _buildDesktopLayout(),
-          ),
-        ),
+    return Scaffold(
+      body: ResponsiveWidget(
+        mobile: _buildMobileLayout(),
+        tablet: _buildTabletLayout(),
+        desktop: _buildDesktopLayout(),
       ),
     );
   }
@@ -298,7 +288,18 @@ class _WelcomePageState extends State<WelcomePage>
         opacity: _fadeAnimation,
         child: CustomButton(
           text: 'Comenzar Experiencia',
-          onPressed: _navigateToDashboard,
+          onPressed: () async {
+            // Animación de salida hacia arriba con fade
+            await _fadeController.reverse();
+            await _slideController.animateTo(0.0, curve: Curves.easeIn);
+
+            // Navegar al dashboard
+            if (mounted) {
+              context
+                  .read<AppBloc>()
+                  .add(const AppNavigateTo(AppRoute.dashboard));
+            }
+          },
           type: ButtonType.primary,
           isFullWidth: true,
           height: 56.h,

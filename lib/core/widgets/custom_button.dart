@@ -30,7 +30,7 @@ class CustomButton extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    
+
     return SizedBox(
       width: isFullWidth ? double.infinity : width,
       height: height ?? 48.h,

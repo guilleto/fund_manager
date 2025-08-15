@@ -25,7 +25,8 @@ class ValidationUtils {
   }
 
   static bool isValidPercentage(String percentage) {
-    final percentageRegex = RegExp(r'^(100(\.0{1,2})?|([0-9]|[1-9][0-9])(\.[0-9]{1,2})?)$');
+    final percentageRegex =
+        RegExp(r'^(100(\.0{1,2})?|([0-9]|[1-9][0-9])(\.[0-9]{1,2})?)$');
     return percentageRegex.hasMatch(percentage);
   }
 
@@ -59,14 +60,16 @@ class ValidationUtils {
     return null;
   }
 
-  static String? validateMinLength(String? value, int minLength, String fieldName) {
+  static String? validateMinLength(
+      String? value, int minLength, String fieldName) {
     if (value == null || value.length < minLength) {
       return '$fieldName debe tener al menos $minLength caracteres';
     }
     return null;
   }
 
-  static String? validateMaxLength(String? value, int maxLength, String fieldName) {
+  static String? validateMaxLength(
+      String? value, int maxLength, String fieldName) {
     if (value != null && value.length > maxLength) {
       return '$fieldName no puede tener más de $maxLength caracteres';
     }

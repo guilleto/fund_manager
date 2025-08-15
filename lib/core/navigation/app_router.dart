@@ -1,15 +1,19 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 
 import '../constants/app_constants.dart';
+import '../blocs/app_bloc.dart';
 import '../../features/welcome/presentation/pages/welcome_page.dart';
 import '../../features/dashboard/presentation/pages/dashboard_page.dart';
 import '../../features/funds/presentation/pages/funds_page.dart';
+import '../../features/funds/presentation/pages/my_funds_page.dart';
 
 // Definir las rutas disponibles
 enum AppRoute {
   welcome,
   dashboard,
   funds,
+  myFunds,
 }
 
 // Clase para manejar la información de la ruta
@@ -29,8 +33,8 @@ class AppRouteInformationParser extends RouteInformationParser<RouteInfo> {
   Future<RouteInfo> parseRouteInformation(
     RouteInformation routeInformation,
   ) async {
-    final uri = Uri.parse(routeInformation.location ?? '/');
-    
+    final uri = Uri.parse(routeInformation.uri.toString());
+
     switch (uri.path) {
       case '/':
       case '/welcome':
@@ -39,6 +43,8 @@ class AppRouteInformationParser extends RouteInformationParser<RouteInfo> {
         return const RouteInfo(route: AppRoute.dashboard);
       case '/funds':
         return const RouteInfo(route: AppRoute.funds);
+      case '/my-funds':
+        return const RouteInfo(route: AppRoute.myFunds);
       default:
         return const RouteInfo(route: AppRoute.welcome);
     }
@@ -48,11 +54,13 @@ class AppRouteInformationParser extends RouteInformationParser<RouteInfo> {
   RouteInformation? restoreRouteInformation(RouteInfo configuration) {
     switch (configuration.route) {
       case AppRoute.welcome:
-        return const RouteInformation(location: '/welcome');
+        return RouteInformation(uri: Uri.parse('/welcome'));
       case AppRoute.dashboard:
-        return const RouteInformation(location: '/dashboard');
+        return RouteInformation(uri: Uri.parse('/dashboard'));
       case AppRoute.funds:
-        return const RouteInformation(location: '/funds');
+        return RouteInformation(uri: Uri.parse('/funds'));
+      case AppRoute.myFunds:
+        return RouteInformation(uri: Uri.parse('/my-funds'));
     }
   }
 }
@@ -61,7 +69,7 @@ class AppRouteInformationParser extends RouteInformationParser<RouteInfo> {
 class AppRouterDelegate extends RouterDelegate<RouteInfo>
     with ChangeNotifier, PopNavigatorRouterDelegateMixin<RouteInfo> {
   final GlobalKey<NavigatorState> _navigatorKey = GlobalKey<NavigatorState>();
-  
+
   RouteInfo _currentConfiguration = const RouteInfo(route: AppRoute.welcome);
 
   @override
@@ -72,14 +80,26 @@ class AppRouterDelegate extends RouterDelegate<RouteInfo>
 
   @override
   Widget build(BuildContext context) {
-    return Navigator(
-      key: navigatorKey,
-      pages: _buildPages(),
-      onDidRemovePage: (page) {
-        if (page.key == const ValueKey('welcome')) {
-          _handleBackNavigation();
+    return BlocListener<AppBloc, AppState>(
+      listener: (context, state) {
+        if (state is AppLoaded) {
+          _setNewRoute(RouteInfo(route: state.currentRoute));
         }
       },
+      child: Navigator(
+        key: navigatorKey,
+        pages: _buildPages(),
+        onPopPage: (route, result) {
+          // Manejar el botón de retroceso del navegador
+          if (!route.didPop(result)) {
+            return false;
+          }
+
+          // Disparar evento de navegación hacia atrás en el AppBloc
+          context.read<AppBloc>().add(const AppNavigateBack());
+          return true;
+        },
+      ),
     );
   }
 
@@ -106,21 +126,13 @@ class AppRouterDelegate extends RouterDelegate<RouteInfo>
             child: FundsPage(),
           ),
         ];
-    }
-  }
-
-  void _handleBackNavigation() {
-    // Lógica para manejar la navegación hacia atrás
-    switch (_currentConfiguration.route) {
-      case AppRoute.dashboard:
-        _setNewRoute(const RouteInfo(route: AppRoute.welcome));
-        break;
-      case AppRoute.funds:
-        _setNewRoute(const RouteInfo(route: AppRoute.dashboard));
-        break;
-      case AppRoute.welcome:
-        // No hacer nada, ya estamos en welcome
-        break;
+      case AppRoute.myFunds:
+        return [
+          const MaterialPage(
+            key: ValueKey('my-funds'),
+            child: MyFundsPage(),
+          ),
+        ];
     }
   }
 
@@ -135,23 +147,6 @@ class AppRouterDelegate extends RouterDelegate<RouteInfo>
       notifyListeners();
     }
   }
-
-  // Métodos públicos para navegación
-  void goToWelcome() {
-    _setNewRoute(const RouteInfo(route: AppRoute.welcome));
-  }
-
-  void goToDashboard() {
-    _setNewRoute(const RouteInfo(route: AppRoute.dashboard));
-  }
-
-  void goToFunds() {
-    _setNewRoute(const RouteInfo(route: AppRoute.funds));
-  }
-
-  void goBack() {
-    _handleBackNavigation();
-  }
 }
 
 // Dispatcher para el botón de retroceso
@@ -162,40 +157,22 @@ class AppBackButtonDispatcher extends RootBackButtonDispatcher {
 
   @override
   Future<bool> didPopRoute() async {
-    routerDelegate.goBack();
     return true;
   }
 }
 
 // Clase principal del router
 class AppRouter {
-  static final AppRouteInformationParser _routeInformationParser = 
+  static final AppRouteInformationParser _routeInformationParser =
       AppRouteInformationParser();
   static final AppRouterDelegate _routerDelegate = AppRouterDelegate();
-  static final AppBackButtonDispatcher _backButtonDispatcher = 
+  static final AppBackButtonDispatcher _backButtonDispatcher =
       AppBackButtonDispatcher(_routerDelegate);
 
-  static RouteInformationParser<RouteInfo> get routeInformationParser => 
+  static RouteInformationParser<RouteInfo> get routeInformationParser =>
       _routeInformationParser;
-  
+
   static RouterDelegate<RouteInfo> get routerDelegate => _routerDelegate;
-  
+
   static BackButtonDispatcher get backButtonDispatcher => _backButtonDispatcher;
-
-  // Métodos de conveniencia para navegación
-  static void goToWelcome() {
-    _routerDelegate.goToWelcome();
-  }
-
-  static void goToDashboard() {
-    _routerDelegate.goToDashboard();
-  }
-
-  static void goToFunds() {
-    _routerDelegate.goToFunds();
-  }
-
-  static void goBack() {
-    _routerDelegate.goBack();
-  }
 }

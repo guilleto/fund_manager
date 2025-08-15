@@ -1,10 +1,8 @@
 import 'package:dio/dio.dart';
-import 'package:injectable/injectable.dart';
 import 'package:logger/logger.dart';
 
 import '../constants/app_constants.dart';
 
-@injectable
 class DioClient {
   late final Dio _dio;
   final Logger _logger = Logger();

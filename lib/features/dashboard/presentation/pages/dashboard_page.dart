@@ -4,7 +4,8 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 
 import '../../../../core/widgets/responsive_widget.dart';
 import '../../../../core/navigation/app_router.dart';
-import '../../../../core/di/injection.dart';
+import '../../../../core/utils/format_utils.dart';
+import '../../../../core/blocs/app_bloc.dart';
 import '../blocs/dashboard_bloc.dart';
 
 class DashboardPage extends StatelessWidget {
@@ -13,41 +14,64 @@ class DashboardPage extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return BlocProvider(
-      create: (context) => getIt<DashboardBloc>()..add(const DashboardStarted()),
-      child: BlocBuilder<DashboardBloc, DashboardState>(
-        builder: (context, state) {
-          return Scaffold(
-            appBar: AppBar(
-              title: const Text('Dashboard'),
-              backgroundColor: Theme.of(context).primaryColor,
-              foregroundColor: Colors.white,
-              actions: [
-                IconButton(
-                  icon: const Icon(Icons.refresh),
-                  onPressed: () => context.read<DashboardBloc>().add(const DashboardRefresh()),
-                  tooltip: 'Actualizar',
-                ),
-                IconButton(
-                  icon: const Icon(Icons.account_balance),
-                  onPressed: () => AppRouter.goToFunds(),
-                  tooltip: 'Ver Fondos',
-                ),
-              ],
-            ),
-            body: state is DashboardLoading
-                ? const Center(child: CircularProgressIndicator())
-                : state is DashboardLoaded
-                    ? ResponsiveWidget(
-                        mobile: _buildMobileLayout(context, state),
-                        tablet: _buildTabletLayout(context, state),
-                        desktop: _buildDesktopLayout(context, state),
-                      )
-                    : state is DashboardError
-                        ? Center(child: Text('Error: ${state.message}'))
-                        : const Center(child: Text('Cargando...')),
-          );
-        },
-      ),
+      create: (context) => DashboardBloc()..add(const DashboardStarted()),
+      child: const DashboardView(),
+    );
+  }
+}
+
+class DashboardView extends StatelessWidget {
+  const DashboardView({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    return BlocBuilder<DashboardBloc, DashboardState>(
+      builder: (context, state) {
+        return Scaffold(
+          appBar: AppBar(
+            title: const Text('Dashboard'),
+            backgroundColor: Theme.of(context).primaryColor,
+            foregroundColor: Colors.white,
+            actions: [
+              IconButton(
+                icon: const Icon(Icons.refresh),
+                onPressed: () =>
+                    context.read<DashboardBloc>().add(const DashboardRefresh()),
+                tooltip: 'Actualizar',
+              ),
+              IconButton(
+                icon: const Icon(Icons.account_balance),
+                onPressed: () {
+                  context
+                      .read<AppBloc>()
+                      .add(const AppNavigateTo(AppRoute.funds));
+                },
+                tooltip: 'Ver Fondos',
+              ),
+              IconButton(
+                icon: const Icon(Icons.account_balance_wallet),
+                onPressed: () {
+                  context
+                      .read<AppBloc>()
+                      .add(const AppNavigateTo(AppRoute.myFunds));
+                },
+                tooltip: 'Mis Fondos',
+              ),
+            ],
+          ),
+          body: state is DashboardLoading
+              ? const Center(child: CircularProgressIndicator())
+              : state is DashboardLoaded
+                  ? ResponsiveWidget(
+                      mobile: _buildMobileLayout(context, state),
+                      tablet: _buildTabletLayout(context, state),
+                      desktop: _buildDesktopLayout(context, state),
+                    )
+                  : state is DashboardError
+                      ? Center(child: Text('Error: ${state.message}'))
+                      : const Center(child: Text('Cargando...')),
+        );
+      },
     );
   }
 
@@ -175,7 +199,7 @@ class DashboardPage extends StatelessWidget {
           children: [
             _buildStatCard(
               'Total de Fondos',
-              '\$${_formatAmount(stats.totalFunds)}',
+              '\$${FormatUtils.formatAmount(stats.totalFunds)}',
               Icons.account_balance,
               Colors.blue,
             ),
@@ -203,7 +227,8 @@ class DashboardPage extends StatelessWidget {
     );
   }
 
-  Widget _buildStatCard(String title, String value, IconData icon, Color color) {
+  Widget _buildStatCard(
+      String title, String value, IconData icon, Color color) {
     return Card(
       elevation: 2,
       child: Padding(
@@ -267,8 +292,8 @@ class DashboardPage extends StatelessWidget {
                       activity.title,
                       activity.subtitle,
                       activity.time,
-                      _getActivityIcon(activity.type),
-                      _getActivityColor(activity.type),
+                      FormatUtils.getActivityIcon(activity.type.name),
+                      FormatUtils.getActivityColor(activity.type.name),
                     ),
                     if (activity != activities.last) Divider(height: 1),
                   ],
@@ -337,44 +362,5 @@ class DashboardPage extends StatelessWidget {
         ],
       ),
     );
-  }
-
-  // Método para formatear montos
-  String _formatAmount(double amount) {
-    if (amount >= 1000000) {
-      return '${(amount / 1000000).toStringAsFixed(1)}M';
-    } else if (amount >= 1000) {
-      return '${(amount / 1000).toStringAsFixed(0)}K';
-    } else {
-      return amount.toStringAsFixed(0);
-    }
-  }
-
-  // Método para obtener el icono de la actividad
-  IconData _getActivityIcon(ActivityType type) {
-    switch (type) {
-      case ActivityType.purchase:
-        return Icons.shopping_cart;
-      case ActivityType.sale:
-        return Icons.sell;
-      case ActivityType.dividend:
-        return Icons.payments;
-      case ActivityType.transfer:
-        return Icons.swap_horiz;
-    }
-  }
-
-  // Método para obtener el color de la actividad
-  Color _getActivityColor(ActivityType type) {
-    switch (type) {
-      case ActivityType.purchase:
-        return Colors.green;
-      case ActivityType.sale:
-        return Colors.red;
-      case ActivityType.dividend:
-        return Colors.blue;
-      case ActivityType.transfer:
-        return Colors.orange;
-    }
   }
 }

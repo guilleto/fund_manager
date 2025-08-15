@@ -92,7 +92,8 @@ class DashboardStats extends Equatable {
   });
 
   @override
-  List<Object?> get props => [totalFunds, performance, activeFunds, totalTransactions];
+  List<Object?> get props =>
+      [totalFunds, performance, activeFunds, totalTransactions];
 }
 
 class ActivityItem extends Equatable {
@@ -130,12 +131,14 @@ class DashboardBloc extends Bloc<DashboardEvent, DashboardState> {
     on<DashboardLoadRecentActivity>(_onLoadRecentActivity);
   }
 
-  void _onDashboardStarted(DashboardStarted event, Emitter<DashboardState> emit) {
+  void _onDashboardStarted(
+      DashboardStarted event, Emitter<DashboardState> emit) {
     emit(const DashboardLoading());
     _loadDashboardData(emit);
   }
 
-  void _onDashboardRefresh(DashboardRefresh event, Emitter<DashboardState> emit) {
+  void _onDashboardRefresh(
+      DashboardRefresh event, Emitter<DashboardState> emit) {
     if (state is DashboardLoaded) {
       final currentState = state as DashboardLoaded;
       emit(currentState.copyWith(isLoading: true));
@@ -143,26 +146,30 @@ class DashboardBloc extends Bloc<DashboardEvent, DashboardState> {
     _loadDashboardData(emit);
   }
 
-  void _onLoadStats(DashboardLoadStats event, Emitter<DashboardState> emit) {
+  void _onLoadStats(
+      DashboardLoadStats event, Emitter<DashboardState> emit) async {
     // Simular carga de estadísticas
-    Future.delayed(const Duration(milliseconds: 300), () {
-      final stats = const DashboardStats(
+    await Future.delayed(const Duration(milliseconds: 300));
+    if (!emit.isDone) {
+      const stats = DashboardStats(
         totalFunds: 1250000.0,
         performance: 12.5,
         activeFunds: 8,
         totalTransactions: 24,
       );
-      
+
       if (state is DashboardLoaded) {
         final currentState = state as DashboardLoaded;
         emit(currentState.copyWith(stats: stats));
       }
-    });
+    }
   }
 
-  void _onLoadRecentActivity(DashboardLoadRecentActivity event, Emitter<DashboardState> emit) {
+  void _onLoadRecentActivity(
+      DashboardLoadRecentActivity event, Emitter<DashboardState> emit) async {
     // Simular carga de actividad reciente
-    Future.delayed(const Duration(milliseconds: 300), () {
+    await Future.delayed(const Duration(milliseconds: 300));
+    if (!emit.isDone) {
       final activity = [
         const ActivityItem(
           title: 'Compra de acciones',
@@ -186,17 +193,17 @@ class DashboardBloc extends Bloc<DashboardEvent, DashboardState> {
           amount: 150.0,
         ),
       ];
-      
+
       if (state is DashboardLoaded) {
         final currentState = state as DashboardLoaded;
         emit(currentState.copyWith(recentActivity: activity));
       }
-    });
+    }
   }
 
   void _loadDashboardData(Emitter<DashboardState> emit) {
     // Cargar datos iniciales
-    final stats = const DashboardStats(
+    const stats = DashboardStats(
       totalFunds: 1250000.0,
       performance: 12.5,
       activeFunds: 8,

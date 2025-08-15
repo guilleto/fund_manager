@@ -21,7 +21,7 @@ class ResponsiveWidget extends StatelessWidget {
       builder: (context, constraints) {
         // Usar MediaQuery para obtener el tamaño real de la pantalla
         final screenWidth = MediaQuery.of(context).size.width;
-        
+
         if (screenWidth >= AppConstants.desktopBreakpoint) {
           return desktop ?? tablet ?? mobile;
         } else if (screenWidth >= AppConstants.tabletBreakpoint) {
@@ -35,7 +35,9 @@ class ResponsiveWidget extends StatelessWidget {
 }
 
 class ResponsiveBuilder extends StatelessWidget {
-  final Widget Function(BuildContext context, bool isMobile, bool isTablet, bool isDesktop) builder;
+  final Widget Function(
+          BuildContext context, bool isMobile, bool isTablet, bool isDesktop)
+      builder;
 
   const ResponsiveBuilder({
     super.key,
@@ -47,12 +49,12 @@ class ResponsiveBuilder extends StatelessWidget {
     return LayoutBuilder(
       builder: (context, constraints) {
         final screenWidth = MediaQuery.of(context).size.width;
-        
+
         final isMobile = screenWidth < AppConstants.tabletBreakpoint;
-        final isTablet = screenWidth >= AppConstants.tabletBreakpoint && 
-                        screenWidth < AppConstants.desktopBreakpoint;
+        final isTablet = screenWidth >= AppConstants.tabletBreakpoint &&
+            screenWidth < AppConstants.desktopBreakpoint;
         final isDesktop = screenWidth >= AppConstants.desktopBreakpoint;
-        
+
         return builder(context, isMobile, isTablet, isDesktop);
       },
     );
@@ -78,7 +80,7 @@ class ResponsivePadding extends StatelessWidget {
     return ResponsiveBuilder(
       builder: (context, isMobile, isTablet, isDesktop) {
         EdgeInsets padding;
-        
+
         if (isDesktop) {
           padding = desktopPadding ?? EdgeInsets.all(32.w);
         } else if (isTablet) {
@@ -86,7 +88,7 @@ class ResponsivePadding extends StatelessWidget {
         } else {
           padding = mobilePadding ?? EdgeInsets.all(16.w);
         }
-        
+
         return Padding(padding: padding, child: child);
       },
     );
@@ -112,7 +114,7 @@ class ResponsiveSpacing extends StatelessWidget {
     return ResponsiveBuilder(
       builder: (context, isMobile, isTablet, isDesktop) {
         double spacing;
-        
+
         if (isDesktop) {
           spacing = desktopSpacing ?? 32.h;
         } else if (isTablet) {
@@ -120,7 +122,7 @@ class ResponsiveSpacing extends StatelessWidget {
         } else {
           spacing = mobileSpacing ?? 16.h;
         }
-        
+
         return isVertical
             ? SizedBox(height: spacing)
             : SizedBox(width: spacing);

@@ -40,4 +40,3 @@ class ValidationFailure extends Failure {
     String? code,
   }) : super(message: message, code: code);
 }
-

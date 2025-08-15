@@ -2,11 +2,15 @@ import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
-import '../../../../core/widgets/custom_button.dart';
-import '../../../../core/widgets/responsive_widget.dart';
-import '../../../../core/navigation/app_router.dart';
-import '../../../../core/di/injection.dart';
-import '../blocs/funds_bloc.dart';
+import 'package:fund_manager/core/widgets/custom_button.dart';
+import 'package:fund_manager/core/widgets/responsive_widget.dart';
+import 'package:fund_manager/core/navigation/app_router.dart';
+import 'package:fund_manager/core/utils/format_utils.dart';
+import 'package:fund_manager/core/blocs/app_bloc.dart';
+import 'package:fund_manager/features/funds/presentation/blocs/funds_bloc.dart';
+import 'package:fund_manager/features/funds/domain/models/fund.dart';
+import 'package:fund_manager/features/funds/domain/services/user_funds_service.dart';
+import 'package:fund_manager/features/funds/domain/services/notification_service.dart';
 
 class FundsPage extends StatelessWidget {
   const FundsPage({super.key});
@@ -14,48 +18,68 @@ class FundsPage extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return BlocProvider(
-      create: (context) => getIt<FundsBloc>()..add(const FundsStarted()),
-      child: BlocBuilder<FundsBloc, FundsState>(
-        builder: (context, state) {
-          return Scaffold(
-            appBar: AppBar(
-              title: const Text('Fondos Disponibles'),
-              backgroundColor: Theme.of(context).primaryColor,
-              foregroundColor: Colors.white,
-              actions: [
-                IconButton(
-                  icon: const Icon(Icons.refresh),
-                  onPressed: () => context.read<FundsBloc>().add(const FundsRefresh()),
-                  tooltip: 'Actualizar',
-                ),
-                IconButton(
-                  icon: const Icon(Icons.dashboard),
-                  onPressed: () => AppRouter.goToDashboard(),
-                  tooltip: 'Ir al Dashboard',
-                ),
-                IconButton(
-                  icon: const Icon(Icons.filter_list),
-                  onPressed: () {
-                    // Aquí iría la lógica para filtrar fondos
-                  },
-                  tooltip: 'Filtrar Fondos',
-                ),
-              ],
-            ),
-            body: state is FundsLoading
-                ? const Center(child: CircularProgressIndicator())
-                : state is FundsLoaded
-                    ? ResponsiveWidget(
-                        mobile: _buildMobileLayout(context, state),
-                        tablet: _buildTabletLayout(context, state),
-                        desktop: _buildDesktopLayout(context, state),
-                      )
-                    : state is FundsError
-                        ? Center(child: Text('Error: ${state.message}'))
-                        : const Center(child: Text('Cargando...')),
-          );
-        },
-      ),
+      create: (context) {
+        final notificationService = MockNotificationService();
+        final userFundsService = MockUserFundsService(notificationService);
+        return FundsBloc(userFundsService)..add(const FundsStarted());
+      },
+      child: const FundsView(),
+    );
+  }
+}
+
+class FundsView extends StatelessWidget {
+  const FundsView({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    return BlocBuilder<FundsBloc, FundsState>(
+      builder: (context, state) {
+        return Scaffold(
+          appBar: AppBar(
+            title: const Text('Fondos Disponibles'),
+            backgroundColor: Theme.of(context).primaryColor,
+            foregroundColor: Colors.white,
+            actions: [
+              IconButton(
+                icon: const Icon(Icons.refresh),
+                onPressed: () =>
+                    context.read<FundsBloc>().add(const FundsRefresh()),
+                tooltip: 'Actualizar',
+              ),
+              IconButton(
+                icon: const Icon(Icons.dashboard),
+                onPressed: () {
+                  context
+                      .read<AppBloc>()
+                      .add(const AppNavigateTo(AppRoute.dashboard));
+                },
+                tooltip: 'Ir al Dashboard',
+              ),
+              IconButton(
+                icon: const Icon(Icons.account_balance_wallet),
+                onPressed: () {
+                  context
+                      .read<AppBloc>()
+                      .add(const AppNavigateTo(AppRoute.myFunds));
+                },
+                tooltip: 'Mis Fondos',
+              ),
+            ],
+          ),
+          body: state is FundsLoading
+              ? const Center(child: CircularProgressIndicator())
+              : state is FundsLoaded
+                  ? ResponsiveWidget(
+                      mobile: _buildMobileLayout(context, state),
+                      tablet: _buildTabletLayout(context, state),
+                      desktop: _buildDesktopLayout(context, state),
+                    )
+                  : state is FundsError
+                      ? Center(child: Text('Error: ${state.message}'))
+                      : const Center(child: Text('Cargando...')),
+        );
+      },
     );
   }
 
@@ -172,7 +196,8 @@ class FundsPage extends StatelessWidget {
                 ),
                 SizedBox(width: 12.w),
                 Expanded(
-                  child: _buildSummaryItem('Mín. Promedio', '\$${_formatAmount(summary.averageMinAmount)}'),
+                  child: _buildSummaryItem('Mín. Promedio',
+                      '\$${FormatUtils.formatAmountInt(summary.averageMinAmount)}'),
                 ),
               ],
             ),
@@ -286,12 +311,15 @@ class FundsPage extends StatelessWidget {
                   crossAxisAlignment: CrossAxisAlignment.end,
                   children: [
                     Container(
-                      padding: EdgeInsets.symmetric(horizontal: 8.w, vertical: 4.h),
+                      padding:
+                          EdgeInsets.symmetric(horizontal: 8.w, vertical: 4.h),
                       decoration: BoxDecoration(
-                        color: _getCategoryColor(fund.category).withOpacity(0.1),
+                        color: FormatUtils.getCategoryColor(fund.category)
+                            .withOpacity(0.1),
                         borderRadius: BorderRadius.circular(12.r),
                         border: Border.all(
-                          color: _getCategoryColor(fund.category).withOpacity(0.3),
+                          color: FormatUtils.getCategoryColor(fund.category)
+                              .withOpacity(0.3),
                           width: 1,
                         ),
                       ),
@@ -300,7 +328,7 @@ class FundsPage extends StatelessWidget {
                         style: TextStyle(
                           fontSize: 10.sp,
                           fontWeight: FontWeight.w600,
-                          color: _getCategoryColor(fund.category),
+                          color: FormatUtils.getCategoryColor(fund.category),
                         ),
                       ),
                     ),
@@ -312,7 +340,8 @@ class FundsPage extends StatelessWidget {
             Row(
               children: [
                 Expanded(
-                  child: _buildFundDetail('Monto Mínimo', '\$${_formatAmount(fund.minAmount)}'),
+                  child: _buildFundDetail('Monto Mínimo',
+                      '\$${FormatUtils.formatAmountInt(fund.minAmount)}'),
                 ),
                 Expanded(
                   child: _buildFundDetail('Riesgo', fund.risk),
@@ -329,7 +358,7 @@ class FundsPage extends StatelessWidget {
                   child: CustomButton(
                     text: 'Ver Detalles',
                     onPressed: () {
-                      context.read<FundsBloc>().add(FundsViewDetails(fund.id));
+                      // TODO: Implementar vista de detalles
                     },
                     type: ButtonType.outline,
                   ),
@@ -337,10 +366,8 @@ class FundsPage extends StatelessWidget {
                 SizedBox(width: 8.w),
                 Expanded(
                   child: CustomButton(
-                    text: 'Invertir',
-                    onPressed: () {
-                      context.read<FundsBloc>().add(FundsInvestInFund(fund.id));
-                    },
+                    text: 'Suscribirse',
+                    onPressed: () => _showSubscribeDialog(context, fund),
                     type: ButtonType.primary,
                   ),
                 ),
@@ -377,28 +404,59 @@ class FundsPage extends StatelessWidget {
     );
   }
 
-  // Método para obtener el color de la categoría
-  Color _getCategoryColor(String category) {
-    switch (category) {
-      case 'FPV':
-        return Colors.blue;
-      case 'FIC':
-        return Colors.green;
-      default:
-        return Colors.grey;
-    }
+  void _showSubscribeDialog(BuildContext context, Fund fund) {
+    final TextEditingController amountController = TextEditingController();
+    amountController.text = fund.minAmount.toString();
+
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: Text('Suscribirse a ${fund.name}'),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text('Monto mínimo: \$${fund.minAmount.toStringAsFixed(0)}'),
+            SizedBox(height: 16.h),
+            TextField(
+              controller: amountController,
+              keyboardType: TextInputType.number,
+              decoration: const InputDecoration(
+                labelText: 'Monto a invertir',
+                prefixText: '\$',
+                border: OutlineInputBorder(),
+              ),
+            ),
+          ],
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(),
+            child: const Text('Cancelar'),
+          ),
+          ElevatedButton(
+            onPressed: () {
+              final amount = double.tryParse(amountController.text);
+              if (amount != null && amount >= fund.minAmount) {
+                Navigator.of(context).pop();
+                context.read<FundsBloc>().add(FundsSubscribeToFund(
+                      fund: fund,
+                      amount: amount,
+                    ));
+              } else {
+                ScaffoldMessenger.of(context).showSnackBar(
+                  SnackBar(
+                    content: Text(
+                        'El monto debe ser al menos \$${fund.minAmount.toStringAsFixed(0)}'),
+                    backgroundColor: Colors.red,
+                  ),
+                );
+              }
+            },
+            child: const Text('Confirmar'),
+          ),
+        ],
+      ),
+    );
   }
-
-  // Método para formatear montos
-  String _formatAmount(int amount) {
-    if (amount >= 1000000) {
-      return '${(amount / 1000000).toStringAsFixed(1)}M';
-    } else if (amount >= 1000) {
-      return '${(amount / 1000).toStringAsFixed(0)}K';
-    } else {
-      return amount.toString();
-    }
-  }
-
-
 }

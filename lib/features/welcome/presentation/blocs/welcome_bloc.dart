@@ -13,14 +13,6 @@ class WelcomeStarted extends WelcomeEvent {
   const WelcomeStarted();
 }
 
-class WelcomeAnimationCompleted extends WelcomeEvent {
-  const WelcomeAnimationCompleted();
-}
-
-class WelcomeNavigateToDashboard extends WelcomeEvent {
-  const WelcomeNavigateToDashboard();
-}
-
 // Estados
 abstract class WelcomeState extends Equatable {
   const WelcomeState();
@@ -38,26 +30,7 @@ class WelcomeLoading extends WelcomeState {
 }
 
 class WelcomeLoaded extends WelcomeState {
-  final bool isAnimationComplete;
-  final bool isNavigating;
-
-  const WelcomeLoaded({
-    this.isAnimationComplete = false,
-    this.isNavigating = false,
-  });
-
-  @override
-  List<Object?> get props => [isAnimationComplete, isNavigating];
-
-  WelcomeLoaded copyWith({
-    bool? isAnimationComplete,
-    bool? isNavigating,
-  }) {
-    return WelcomeLoaded(
-      isAnimationComplete: isAnimationComplete ?? this.isAnimationComplete,
-      isNavigating: isNavigating ?? this.isNavigating,
-    );
-  }
+  const WelcomeLoaded();
 }
 
 class WelcomeError extends WelcomeState {
@@ -69,33 +42,32 @@ class WelcomeError extends WelcomeState {
   List<Object?> get props => [message];
 }
 
+class WelcomeCompleted extends WelcomeState {
+  const WelcomeCompleted();
+}
+
+class WelcomeFinished extends WelcomeEvent {
+  const WelcomeFinished();
+}
+
 // BLoC
 class WelcomeBloc extends Bloc<WelcomeEvent, WelcomeState> {
   WelcomeBloc() : super(const WelcomeInitial()) {
     on<WelcomeStarted>(_onWelcomeStarted);
-    on<WelcomeAnimationCompleted>(_onAnimationCompleted);
-    on<WelcomeNavigateToDashboard>(_onNavigateToDashboard);
+    on<WelcomeFinished>(_onWelcomeFinished);
   }
 
-  void _onWelcomeStarted(WelcomeStarted event, Emitter<WelcomeState> emit) {
+  void _onWelcomeStarted(
+      WelcomeStarted event, Emitter<WelcomeState> emit) async {
     emit(const WelcomeLoading());
     // Simular carga inicial
-    Future.delayed(const Duration(milliseconds: 500), () {
+    await Future.delayed(const Duration(milliseconds: 250));
+    if (!emit.isDone) {
       emit(const WelcomeLoaded());
-    });
-  }
-
-  void _onAnimationCompleted(WelcomeAnimationCompleted event, Emitter<WelcomeState> emit) {
-    if (state is WelcomeLoaded) {
-      final currentState = state as WelcomeLoaded;
-      emit(currentState.copyWith(isAnimationComplete: true));
     }
   }
 
-  void _onNavigateToDashboard(WelcomeNavigateToDashboard event, Emitter<WelcomeState> emit) {
-    if (state is WelcomeLoaded) {
-      final currentState = state as WelcomeLoaded;
-      emit(currentState.copyWith(isNavigating: true));
-    }
+  void _onWelcomeFinished(WelcomeFinished event, Emitter<WelcomeState> emit) {
+    emit(const WelcomeCompleted());
   }
 }

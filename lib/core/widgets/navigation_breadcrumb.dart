@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 
-import '../navigation/app_router.dart';
+import 'package:fund_manager/core/navigation/app_router.dart';
+import 'package:fund_manager/core/blocs/app_bloc.dart';
 
 class NavigationBreadcrumb extends StatelessWidget {
   final AppRoute currentRoute;
@@ -64,7 +66,7 @@ class NavigationBreadcrumb extends StatelessWidget {
     required bool isActive,
   }) {
     return InkWell(
-      onTap: isActive ? null : () => _navigateToRoute(route),
+      onTap: isActive ? null : () => _navigateToRoute(context, route),
       borderRadius: BorderRadius.circular(8.r),
       child: Container(
         padding: EdgeInsets.symmetric(horizontal: 12.w, vertical: 6.h),
@@ -82,7 +84,11 @@ class NavigationBreadcrumb extends StatelessWidget {
               size: 16.sp,
               color: isActive
                   ? Theme.of(context).primaryColor
-                  : Theme.of(context).textTheme.bodyMedium?.color?.withOpacity(0.7),
+                  : Theme.of(context)
+                      .textTheme
+                      .bodyMedium
+                      ?.color
+                      ?.withOpacity(0.7),
             ),
             SizedBox(width: 4.w),
             Text(
@@ -92,7 +98,11 @@ class NavigationBreadcrumb extends StatelessWidget {
                 fontWeight: isActive ? FontWeight.w600 : FontWeight.normal,
                 color: isActive
                     ? Theme.of(context).primaryColor
-                    : Theme.of(context).textTheme.bodyMedium?.color?.withOpacity(0.7),
+                    : Theme.of(context)
+                        .textTheme
+                        .bodyMedium
+                        ?.color
+                        ?.withOpacity(0.7),
               ),
             ),
           ],
@@ -112,17 +122,7 @@ class NavigationBreadcrumb extends StatelessWidget {
     );
   }
 
-  void _navigateToRoute(AppRoute route) {
-    switch (route) {
-      case AppRoute.welcome:
-        AppRouter.goToWelcome();
-        break;
-      case AppRoute.dashboard:
-        AppRouter.goToDashboard();
-        break;
-      case AppRoute.funds:
-        AppRouter.goToFunds();
-        break;
-    }
+  void _navigateToRoute(BuildContext context, AppRoute route) {
+    context.read<AppBloc>().add(AppNavigateTo(route));
   }
 }
