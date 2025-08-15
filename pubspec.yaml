@@ -14,12 +14,48 @@ dependencies:
     sdk: flutter
   flutter_localizations:
     sdk: flutter
+  
+  # State Management
+  flutter_bloc: ^8.1.4
+  equatable: ^2.0.5
+  
+  # Dependency Injection
+  get_it: ^7.6.7
+  injectable: ^2.3.2
+  
+  # HTTP Client
+  dio: ^5.4.0
+  
+  # JSON Serialization
+  json_annotation: ^4.8.1
+  
+  # Navigation - Using Flutter's built-in Navigator 2.0
+  
+  # UI Components
+  flutter_screenutil: ^5.9.0
+  
+  # Utils
+  dartz: ^0.10.1
+  logger: ^2.0.2+1
+  intl: ^0.19.0
 
 dev_dependencies:
   flutter_test:
     sdk: flutter
+  integration_test:
+    sdk: flutter
 
   flutter_lints: ^5.0.0
+  
+  # Code Generation
+  build_runner: ^2.4.8
+  json_serializable: ^6.7.1
+  injectable_generator: ^2.4.1
+  
+  # Testing
+  bloc_test: ^9.1.5
+  mockito: ^5.4.4
+  mocktail: ^1.0.3
 
 flutter:
   uses-material-design: true
