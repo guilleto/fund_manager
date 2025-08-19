@@ -19,9 +19,7 @@ dependencies:
   flutter_bloc: ^8.1.4
   equatable: ^2.0.5
   
-  # Dependency Injection
-  get_it: ^7.6.7
-  injectable: ^2.3.2
+
   
   # HTTP Client
   dio: ^5.4.0
@@ -33,6 +31,7 @@ dependencies:
   
   # UI Components
   flutter_screenutil: ^5.9.0
+  fl_chart: ^0.66.2
   
   # Utils
   dartz: ^0.10.1
@@ -50,7 +49,6 @@ dev_dependencies:
   # Code Generation
   build_runner: ^2.4.8
   json_serializable: ^6.7.1
-  injectable_generator: ^2.4.1
   
   # Testing
   bloc_test: ^9.1.5
