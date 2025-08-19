@@ -37,6 +37,7 @@ class Transaction extends Equatable {
 enum TransactionType {
   subscription,
   cancellation,
+  performance,
 }
 
 enum TransactionStatus {
@@ -53,6 +54,8 @@ extension TransactionTypeExtension on TransactionType {
         return 'Suscripción';
       case TransactionType.cancellation:
         return 'Cancelación';
+      case TransactionType.performance:
+        return 'Rendimiento';
     }
   }
 
@@ -62,6 +65,8 @@ extension TransactionTypeExtension on TransactionType {
         return 'Suscribirse';
       case TransactionType.cancellation:
         return 'Cancelar';
+      case TransactionType.performance:
+        return 'Ver Rendimiento';
     }
   }
 }
