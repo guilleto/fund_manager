@@ -42,23 +42,41 @@ class MockUserFundsService implements UserFundsService {
 
   @override
   Future<User> getCurrentUser() async {
-    // Simular delay de red
-    await Future.delayed(const Duration(milliseconds: 200));
-    return _currentUser;
+    try {
+      // Simular delay de red
+      await Future.delayed(const Duration(milliseconds: 200));
+      return _currentUser;
+    } catch (e) {
+      // Si hay un error, devolver el usuario actual en lugar de propagar la excepción
+      print('Error al obtener usuario actual: $e');
+      return _currentUser;
+    }
   }
 
   @override
   Future<List<UserFund>> getUserFunds() async {
-    // Simular delay de red
-    await Future.delayed(const Duration(milliseconds: 300));
-    return _userFunds.where((fund) => fund.isActive).toList();
+    try {
+      // Simular delay de red
+      await Future.delayed(const Duration(milliseconds: 300));
+      return _userFunds.where((fund) => fund.isActive).toList();
+    } catch (e) {
+      // Si hay un error, devolver lista vacía en lugar de propagar la excepción
+      print('Error al obtener fondos del usuario: $e');
+      return [];
+    }
   }
 
   @override
   Future<List<Transaction>> getTransactionHistory() async {
-    // Simular delay de red
-    await Future.delayed(const Duration(milliseconds: 250));
-    return _transactions.reversed.toList(); // Más recientes primero
+    try {
+      // Simular delay de red
+      await Future.delayed(const Duration(milliseconds: 250));
+      return _transactions.reversed.toList(); // Más recientes primero
+    } catch (e) {
+      // Si hay un error, devolver lista vacía en lugar de propagar la excepción
+      print('Error al obtener historial de transacciones: $e');
+      return [];
+    }
   }
 
   @override
@@ -66,125 +84,150 @@ class MockUserFundsService implements UserFundsService {
     required Fund fund,
     required double amount,
   }) async {
-    // Validar si ya está suscrito al fondo
-    final existingSubscription = _userFunds.where(
-      (uf) => uf.fundId == fund.id.toString() && uf.isActive,
-    ).firstOrNull;
-    
-    if (existingSubscription != null) {
-      throw Exception(
-          'Ya estás suscrito al fondo ${fund.name}. No puedes suscribirte múltiples veces al mismo fondo.');
+    try {
+      // Validar si ya está suscrito al fondo
+      final existingSubscriptions = _userFunds.where(
+        (uf) => uf.fundId == fund.id.toString() && uf.isActive,
+      ).toList();
+      
+      if (existingSubscriptions.isNotEmpty) {
+        throw Exception(
+            'Ya estás suscrito al fondo ${fund.name}. No puedes suscribirte múltiples veces al mismo fondo.');
+      }
+
+      // Validar saldo suficiente
+      if (_currentUser.balance < amount) {
+        throw Exception(
+            'Saldo insuficiente. Saldo actual: \$${_currentUser.balance.toStringAsFixed(0)}');
+      }
+
+      // Validar monto mínimo
+      if (amount < fund.minAmount) {
+        throw Exception(
+            'El monto debe ser al menos \$${fund.minAmount.toStringAsFixed(0)}');
+      }
+
+      // Simular procesamiento
+      await Future.delayed(const Duration(milliseconds: 1000));
+
+      // Crear transacción
+      final transaction = Transaction(
+        id: DateTime.now().millisecondsSinceEpoch.toString(),
+        fundId: fund.id.toString(),
+        fundName: fund.name,
+        type: TransactionType.subscription,
+        amount: amount,
+        date: DateTime.now(),
+        status: TransactionStatus.completed,
+        description: 'Suscripción al fondo ${fund.name}',
+      );
+
+      // Actualizar saldo del usuario
+      _currentUser = _currentUser.copyWith(
+        balance: _currentUser.balance - amount,
+      );
+
+      // Agregar fondo a la lista del usuario
+      final userFund = UserFund(
+        id: DateTime.now().millisecondsSinceEpoch.toString(),
+        fundId: fund.id.toString(),
+        fundName: fund.name,
+        category: fund.category,
+        investedAmount: amount,
+        subscriptionDate: DateTime.now(),
+        currentValue: amount, // Inicialmente igual al monto invertido
+        performance: 0.0, // Sin rendimiento inicial
+        isActive: true,
+      );
+
+      _userFunds.add(userFund);
+      _transactions.add(transaction);
+
+      // Enviar notificación (sin bloquear si falla)
+      try {
+        await _notificationService.sendTransactionNotification(
+          user: _currentUser,
+          transaction: transaction,
+        );
+      } catch (notificationError) {
+        print('Error al enviar notificación: $notificationError');
+        // No fallar la suscripción si la notificación falla
+      }
+
+      return true;
+    } catch (e) {
+      print('Error en subscribeToFund: $e');
+      rethrow; // Re-lanzar la excepción para que el BLoC la maneje
     }
-
-    // Validar saldo suficiente
-    if (_currentUser.balance < amount) {
-      throw Exception(
-          'Saldo insuficiente. Saldo actual: \$${_currentUser.balance.toStringAsFixed(0)}');
-    }
-
-    // Validar monto mínimo
-    if (amount < fund.minAmount) {
-      throw Exception(
-          'El monto debe ser al menos \$${fund.minAmount.toStringAsFixed(0)}');
-    }
-
-    // Simular procesamiento
-    await Future.delayed(const Duration(milliseconds: 1000));
-
-    // Crear transacción
-    final transaction = Transaction(
-      id: DateTime.now().millisecondsSinceEpoch.toString(),
-      fundId: fund.id.toString(),
-      fundName: fund.name,
-      type: TransactionType.subscription,
-      amount: amount,
-      date: DateTime.now(),
-      status: TransactionStatus.completed,
-      description: 'Suscripción al fondo ${fund.name}',
-    );
-
-    // Actualizar saldo del usuario
-    _currentUser = _currentUser.copyWith(
-      balance: _currentUser.balance - amount,
-    );
-
-    // Agregar fondo a la lista del usuario
-    final userFund = UserFund(
-      id: DateTime.now().millisecondsSinceEpoch.toString(),
-      fundId: fund.id.toString(),
-      fundName: fund.name,
-      category: fund.category,
-      investedAmount: amount,
-      subscriptionDate: DateTime.now(),
-      currentValue: amount, // Inicialmente igual al monto invertido
-      performance: 0.0, // Sin rendimiento inicial
-      isActive: true,
-    );
-
-    _userFunds.add(userFund);
-    _transactions.add(transaction);
-
-    // Enviar notificación
-    await _notificationService.sendTransactionNotification(
-      user: _currentUser,
-      transaction: transaction,
-    );
-
-    return true;
   }
 
   @override
   Future<bool> cancelFund({
     required UserFund userFund,
   }) async {
-    // Simular procesamiento
-    await Future.delayed(const Duration(milliseconds: 800));
+    try {
+      // Simular procesamiento
+      await Future.delayed(const Duration(milliseconds: 800));
 
-    // Crear transacción de cancelación
-    final transaction = Transaction(
-      id: DateTime.now().millisecondsSinceEpoch.toString(),
-      fundId: userFund.fundId,
-      fundName: userFund.fundName,
-      type: TransactionType.cancellation,
-      amount: userFund.currentValue,
-      date: DateTime.now(),
-      status: TransactionStatus.completed,
-      description: 'Cancelación del fondo ${userFund.fundName}',
-    );
+      // Crear transacción de cancelación
+      final transaction = Transaction(
+        id: DateTime.now().millisecondsSinceEpoch.toString(),
+        fundId: userFund.fundId,
+        fundName: userFund.fundName,
+        type: TransactionType.cancellation,
+        amount: userFund.currentValue,
+        date: DateTime.now(),
+        status: TransactionStatus.completed,
+        description: 'Cancelación del fondo ${userFund.fundName}',
+      );
 
-    // Actualizar saldo del usuario (devolver el valor actual)
-    _currentUser = _currentUser.copyWith(
-      balance: _currentUser.balance + userFund.currentValue,
-    );
+      // Actualizar saldo del usuario (devolver el valor actual)
+      _currentUser = _currentUser.copyWith(
+        balance: _currentUser.balance + userFund.currentValue,
+      );
 
-    // Marcar fondo como inactivo
-    final index = _userFunds.indexWhere((fund) => fund.id == userFund.id);
-    if (index != -1) {
-      _userFunds[index] = _userFunds[index].copyWith(isActive: false);
+      // Marcar fondo como inactivo
+      final index = _userFunds.indexWhere((fund) => fund.id == userFund.id);
+      if (index != -1) {
+        _userFunds[index] = _userFunds[index].copyWith(isActive: false);
+      }
+
+      _transactions.add(transaction);
+
+      // Enviar notificación (sin bloquear si falla)
+      try {
+        await _notificationService.sendTransactionNotification(
+          user: _currentUser,
+          transaction: transaction,
+        );
+      } catch (notificationError) {
+        print('Error al enviar notificación: $notificationError');
+        // No fallar la cancelación si la notificación falla
+      }
+
+      return true;
+    } catch (e) {
+      print('Error en cancelFund: $e');
+      rethrow; // Re-lanzar la excepción para que el BLoC la maneje
     }
-
-    _transactions.add(transaction);
-
-    // Enviar notificación
-    await _notificationService.sendTransactionNotification(
-      user: _currentUser,
-      transaction: transaction,
-    );
-
-    return true;
   }
 
   @override
   Future<bool> updateNotificationPreference({
     required NotificationPreference preference,
   }) async {
-    // Simular delay de red
-    await Future.delayed(const Duration(milliseconds: 150));
+    try {
+      // Simular delay de red
+      await Future.delayed(const Duration(milliseconds: 150));
 
-    _currentUser = _currentUser.copyWith(
-      notificationPreference: preference,
-    );
+      _currentUser = _currentUser.copyWith(
+        notificationPreference: preference,
+      );
 
-    return true;
+      return true;
+    } catch (e) {
+      print('Error al actualizar preferencias de notificación: $e');
+      return false; // Devolver false en lugar de propagar la excepción
+    }
   }
 }

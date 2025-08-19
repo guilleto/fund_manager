@@ -133,8 +133,7 @@ class NavigationSidebar extends StatelessWidget {
           icon: Icons.history,
           title: 'Historial',
           subtitle: 'Transacciones',
-          route: AppRoute.myFunds, // Por ahora va a MyFunds
-          onTap: () => _showTransactionHistory(context),
+          route: AppRoute.transactions,
         ),
         _buildNavigationItem(
           context,
@@ -235,10 +234,4 @@ class NavigationSidebar extends StatelessWidget {
     );
   }
 
-  void _showTransactionHistory(BuildContext context) {
-    Navigator.of(context).pop(); // Cerrar drawer primero
-    // Aquí se puede implementar la lógica para mostrar el historial
-    // Por ahora solo navegamos a MyFunds
-    context.read<AppBloc>().add(const AppNavigateTo(AppRoute.myFunds));
-  }
 }

@@ -240,9 +240,10 @@ class AppBloc extends Bloc<AppEvent, AppState> {
           errorMessage: null,
         ));
       } catch (e) {
+        print('Error al cargar datos del usuario: $e');
         emit(currentState.copyWith(
           isLoading: false,
-          errorMessage: e.toString(),
+          errorMessage: 'Error al cargar los datos. Por favor, intenta de nuevo.',
         ));
       }
     }
@@ -281,6 +282,7 @@ class AppBloc extends Bloc<AppEvent, AppState> {
           ));
         }
       } catch (e) {
+        print('Error en suscripción a fondo: $e');
         emit(currentState.copyWith(
           isLoading: false,
           errorMessage: e.toString(),
@@ -318,6 +320,7 @@ class AppBloc extends Bloc<AppEvent, AppState> {
           ));
         }
       } catch (e) {
+        print('Error en cancelación de fondo: $e');
         emit(currentState.copyWith(
           isLoading: false,
           errorMessage: e.toString(),
@@ -343,8 +346,14 @@ class AppBloc extends Bloc<AppEvent, AppState> {
             currentUser: user,
             isLoading: false,
           ));
+        } else {
+          emit(currentState.copyWith(
+            isLoading: false,
+            errorMessage: 'No se pudo actualizar la preferencia de notificación.',
+          ));
         }
       } catch (e) {
+        print('Error al actualizar preferencia de notificación: $e');
         emit(currentState.copyWith(
           isLoading: false,
           errorMessage: e.toString(),
