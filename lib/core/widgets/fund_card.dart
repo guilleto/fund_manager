@@ -3,6 +3,8 @@ import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
 import 'package:fund_manager/core/widgets/custom_button.dart';
+import 'package:fund_manager/core/widgets/subscription_status_badge.dart';
+import 'package:fund_manager/core/widgets/subscription_info_card.dart';
 import 'package:fund_manager/core/utils/format_utils.dart';
 import 'package:fund_manager/core/blocs/app_bloc.dart';
 import 'package:fund_manager/core/navigation/app_router.dart';
@@ -29,193 +31,145 @@ class FundCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final isSubscribed = userFund != null && userFund!.isActive;
+    return BlocBuilder<AppBloc, AppState>(
+      builder: (context, appState) {
+        // Obtener el userFund actualizado del AppBloc
+        UserFund? currentUserFund;
+        if (appState is AppLoaded) {
+          currentUserFund = appState.userFunds
+              .where((uf) => uf.fundId == fund.id.toString() && uf.isActive)
+              .firstOrNull;
+        }
+        
+        // Usar el userFund actualizado o el pasado como prop
+        final effectiveUserFund = currentUserFund ?? userFund;
+        final isSubscribed = effectiveUserFund != null && effectiveUserFund.isActive;
 
-    return Card(
-      margin: EdgeInsets.only(bottom: 12.h),
-      elevation: 2,
-      child: Padding(
-        padding: EdgeInsets.all(16.w),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        return Card(
+          margin: EdgeInsets.only(bottom: 12.h),
+          elevation: 2,
+          child: Padding(
+            padding: EdgeInsets.all(16.w),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        fund.name,
-                        style: TextStyle(
-                          fontSize: 16.sp,
-                          fontWeight: FontWeight.bold,
-                        ),
-                        maxLines: 2,
-                        overflow: TextOverflow.ellipsis,
-                      ),
-                      SizedBox(height: 4.h),
-                      Text(
-                        fund.type,
-                        style: TextStyle(
-                          fontSize: 12.sp,
-                          color: Colors.grey[600],
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-                SizedBox(width: 12.w),
-                Column(
-                  crossAxisAlignment: CrossAxisAlignment.end,
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
-                    Container(
-                      padding:
-                          EdgeInsets.symmetric(horizontal: 8.w, vertical: 4.h),
-                      decoration: BoxDecoration(
-                        color: FormatUtils.getCategoryColor(fund.category)
-                            .withOpacity(0.1),
-                        borderRadius: BorderRadius.circular(12.r),
-                        border: Border.all(
-                          color: FormatUtils.getCategoryColor(fund.category)
-                              .withOpacity(0.3),
-                          width: 1,
-                        ),
-                      ),
-                      child: Text(
-                        fund.category,
-                        style: TextStyle(
-                          fontSize: 10.sp,
-                          fontWeight: FontWeight.w600,
-                          color: FormatUtils.getCategoryColor(fund.category),
-                        ),
-                      ),
-                    ),
-                    if (isSubscribed) ...[
-                      SizedBox(height: 4.h),
-                      Container(
-                        padding: EdgeInsets.symmetric(
-                            horizontal: 6.w, vertical: 2.h),
-                        decoration: BoxDecoration(
-                          color: Colors.green.withOpacity(0.1),
-                          borderRadius: BorderRadius.circular(8.r),
-                          border: Border.all(
-                            color: Colors.green.withOpacity(0.3),
-                            width: 1,
-                          ),
-                        ),
-                        child: Text(
-                          'Suscrito',
-                          style: TextStyle(
-                            fontSize: 8.sp,
-                            fontWeight: FontWeight.w600,
-                            color: Colors.green,
-                          ),
-                        ),
-                      ),
-                    ],
-                  ],
-                ),
-              ],
-            ),
-            SizedBox(height: 12.h),
-            Row(
-              children: [
-                Expanded(
-                  child: _buildFundDetail('Monto Mínimo',
-                      '\$${FormatUtils.formatAmountInt(fund.minAmount)}'),
-                ),
-                Expanded(
-                  child: _buildFundDetail('Riesgo', fund.risk),
-                ),
-                Expanded(
-                  child: _buildFundDetail(
-                      'Estado', isSubscribed ? 'Suscrito' : fund.status),
-                ),
-              ],
-            ),
-            if (isSubscribed && userFund != null) ...[
-              SizedBox(height: 8.h),
-              Container(
-                padding: EdgeInsets.all(8.w),
-                decoration: BoxDecoration(
-                  color: Colors.blue.withOpacity(0.1),
-                  borderRadius: BorderRadius.circular(8.r),
-                  border: Border.all(
-                    color: Colors.blue.withOpacity(0.3),
-                    width: 1,
-                  ),
-                ),
-                child: Row(
-                  children: [
-                    Icon(
-                      Icons.account_balance_wallet,
-                      size: 16.sp,
-                      color: Colors.blue,
-                    ),
-                    SizedBox(width: 8.w),
                     Expanded(
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           Text(
-                            'Inversión Actual',
+                            fund.name,
                             style: TextStyle(
-                              fontSize: 10.sp,
-                              color: Colors.blue[700],
-                              fontWeight: FontWeight.w500,
+                              fontSize: 16.sp,
+                              fontWeight: FontWeight.bold,
                             ),
+                            maxLines: 2,
+                            overflow: TextOverflow.ellipsis,
                           ),
+                          SizedBox(height: 4.h),
                           Text(
-                            '\$${FormatUtils.formatAmount(userFund!.investedAmount)}',
+                            fund.type,
                             style: TextStyle(
                               fontSize: 12.sp,
-                              fontWeight: FontWeight.bold,
-                              color: Colors.blue[700],
+                              color: Colors.grey[600],
                             ),
                           ),
                         ],
                       ),
                     ),
+                    SizedBox(width: 12.w),
+                    Column(
+                      crossAxisAlignment: CrossAxisAlignment.end,
+                      children: [
+                        Container(
+                          padding:
+                              EdgeInsets.symmetric(horizontal: 8.w, vertical: 4.h),
+                          decoration: BoxDecoration(
+                            color: FormatUtils.getCategoryColor(fund.category)
+                                .withOpacity(0.1),
+                            borderRadius: BorderRadius.circular(12.r),
+                            border: Border.all(
+                              color: FormatUtils.getCategoryColor(fund.category)
+                                  .withOpacity(0.3),
+                              width: 1,
+                            ),
+                          ),
+                          child: Text(
+                            fund.category,
+                            style: TextStyle(
+                              fontSize: 10.sp,
+                              fontWeight: FontWeight.w600,
+                              color: FormatUtils.getCategoryColor(fund.category),
+                            ),
+                          ),
+                        ),
+                        if (isSubscribed) ...[
+                          SizedBox(height: 4.h),
+                          SubscriptionStatusBadge(isSubscribed: isSubscribed),
+                        ],
+                      ],
+                    ),
                   ],
                 ),
-              ),
-            ],
-            if (showActions) ...[
-              SizedBox(height: 12.h),
-              Row(
-                children: [
-                  Expanded(
-                    child: CustomButton(
-                      text: 'Ver Detalles',
-                      onPressed: onViewDetails ??
-                          () {
-                            context.read<AppBloc>().add(AppNavigateTo(
-                                AppRoute.fundDetails,
-                                arguments: {'fund': fund}));
-                          },
-                      type: ButtonType.outline,
+                SizedBox(height: 12.h),
+                Row(
+                  children: [
+                    Expanded(
+                      child: _buildFundDetail('Monto Mínimo',
+                          '\$${FormatUtils.formatAmountInt(fund.minAmount)}'),
                     ),
-                  ),
-                  SizedBox(width: 8.w),
-                  Expanded(
-                    child: CustomButton(
-                      text: isSubscribed ? 'Cancelar' : 'Suscribirse',
-                      onPressed: isSubscribed
-                          ? (onCancel ?? () => _showCancelDialog(context))
-                          : (onSubscribe ??
-                              () => _showSubscribeDialog(context)),
-                      type:
-                          isSubscribed ? ButtonType.danger : ButtonType.primary,
+                    Expanded(
+                      child: _buildFundDetail('Riesgo', fund.risk),
                     ),
+                    Expanded(
+                      child: _buildFundDetail(
+                          'Estado', isSubscribed ? 'Suscrito' : fund.status),
+                    ),
+                  ],
+                ),
+                if (isSubscribed && effectiveUserFund != null) ...[
+                  SizedBox(height: 8.h),
+                  SubscriptionInfoCard(userFund: effectiveUserFund),
+                ],
+                if (showActions) ...[
+                  SizedBox(height: 12.h),
+                  Row(
+                    children: [
+                      Expanded(
+                        child: CustomButton(
+                          text: 'Ver Detalles',
+                          onPressed: onViewDetails ??
+                              () {
+                                context.read<AppBloc>().add(AppNavigateTo(
+                                    AppRoute.fundDetails,
+                                    arguments: {'fund': fund}));
+                              },
+                          type: ButtonType.outline,
+                        ),
+                      ),
+                      SizedBox(width: 8.w),
+                      Expanded(
+                        child: CustomButton(
+                          text: isSubscribed ? 'Cancelar Suscripción' : 'Suscribirse',
+                          onPressed: isSubscribed
+                              ? (onCancel ?? () => _showCancelDialog(context, effectiveUserFund))
+                              : (onSubscribe ??
+                                  () => _showSubscribeDialog(context)),
+                          type:
+                              isSubscribed ? ButtonType.danger : ButtonType.primary,
+                        ),
+                      ),
+                    ],
                   ),
                 ],
-              ),
-            ],
-          ],
-        ),
-      ),
+              ],
+            ),
+          ),
+        );
+      },
     );
   }
 
@@ -356,7 +310,7 @@ class FundCard extends StatelessWidget {
     );
   }
 
-  void _showCancelDialog(BuildContext context) {
+  void _showCancelDialog(BuildContext context, UserFund? userFund) {
     showDialog(
       context: context,
       builder: (dialogContext) => BlocListener<AppBloc, AppState>(

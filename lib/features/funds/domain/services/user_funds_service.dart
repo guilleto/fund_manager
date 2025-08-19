@@ -66,6 +66,16 @@ class MockUserFundsService implements UserFundsService {
     required Fund fund,
     required double amount,
   }) async {
+    // Validar si ya está suscrito al fondo
+    final existingSubscription = _userFunds.where(
+      (uf) => uf.fundId == fund.id.toString() && uf.isActive,
+    ).firstOrNull;
+    
+    if (existingSubscription != null) {
+      throw Exception(
+          'Ya estás suscrito al fondo ${fund.name}. No puedes suscribirte múltiples veces al mismo fondo.');
+    }
+
     // Validar saldo suficiente
     if (_currentUser.balance < amount) {
       throw Exception(
