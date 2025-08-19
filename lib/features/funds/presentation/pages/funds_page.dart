@@ -5,6 +5,8 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:fund_manager/core/widgets/custom_button.dart';
 import 'package:fund_manager/core/widgets/responsive_widget.dart';
 import 'package:fund_manager/core/widgets/fund_card.dart';
+import 'package:fund_manager/core/widgets/loading_overlay.dart';
+import 'package:fund_manager/core/widgets/auto_refresh_widget.dart';
 import 'package:fund_manager/core/navigation/app_router.dart';
 import 'package:fund_manager/core/utils/format_utils.dart';
 import 'package:fund_manager/core/blocs/app_bloc.dart';
@@ -34,66 +36,98 @@ class FundsView extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return BlocListener<AppBloc, AppState>(
-      listener: (context, state) {
-        if (state is AppLoaded) {
-          // Mostrar mensajes de error si existen
-          if (state.errorMessage != null && state.errorMessage!.isNotEmpty) {
-            ScaffoldMessenger.of(context).showSnackBar(
-              SnackBar(
-                content: Text(state.errorMessage!),
-                backgroundColor: Colors.red,
-                duration: const Duration(seconds: 4),
-              ),
-            );
-          }
-        }
-      },
+    return MultiBlocListener(
+      listeners: [
+        BlocListener<AppBloc, AppState>(
+          listener: (context, state) {
+            if (state is AppLoaded) {
+              // Mostrar mensajes de error si existen
+              if (state.errorMessage != null && state.errorMessage!.isNotEmpty) {
+                ScaffoldMessenger.of(context).showSnackBar(
+                  SnackBar(
+                    content: Text(state.errorMessage!),
+                    backgroundColor: Colors.red,
+                    duration: const Duration(seconds: 4),
+                  ),
+                );
+              }
+              
+              // Sincronizar datos con el FundsBloc
+              context.read<FundsBloc>().add(FundsSyncWithAppBloc(
+                currentUser: state.currentUser,
+                userFunds: state.userFunds,
+                transactions: state.transactionHistory,
+              ));
+            }
+          },
+        ),
+        BlocListener<FundsBloc, FundsState>(
+          listener: (context, state) {
+            if (state is FundsLoaded && state.errorMessage != null) {
+              ScaffoldMessenger.of(context).showSnackBar(
+                SnackBar(
+                  content: Text(state.errorMessage!),
+                  backgroundColor: Colors.red,
+                  duration: const Duration(seconds: 4),
+                ),
+              );
+            }
+          },
+        ),
+      ],
       child: BlocBuilder<FundsBloc, FundsState>(
         builder: (context, state) {
-          return Scaffold(
-            appBar: AppBar(
-              title: const Text('Fondos Disponibles'),
-              backgroundColor: Theme.of(context).primaryColor,
-              foregroundColor: Colors.white,
-              actions: [
-                IconButton(
-                  icon: const Icon(Icons.refresh),
-                  onPressed: () =>
-                      context.read<FundsBloc>().add(const FundsRefresh()),
-                  tooltip: 'Actualizar',
-                ),
-                IconButton(
-                  icon: const Icon(Icons.dashboard),
-                  onPressed: () {
-                    context
-                        .read<AppBloc>()
-                        .add(const AppNavigateTo(AppRoute.dashboard));
-                  },
-                  tooltip: 'Ir al Dashboard',
-                ),
-                IconButton(
-                  icon: const Icon(Icons.account_balance_wallet),
-                  onPressed: () {
-                    context
-                        .read<AppBloc>()
-                        .add(const AppNavigateTo(AppRoute.myFunds));
-                  },
-                  tooltip: 'Mis Fondos',
-                ),
-              ],
+          return AutoRefreshWidget(
+            child: Scaffold(
+              appBar: AppBar(
+                title: const Text('Fondos Disponibles'),
+                backgroundColor: Theme.of(context).primaryColor,
+                foregroundColor: Colors.white,
+                actions: [
+                  IconButton(
+                    icon: const Icon(Icons.refresh),
+                    onPressed: () {
+                      context.read<FundsBloc>().add(const FundsRefresh());
+                      context.read<AppBloc>().add(const AppLoadUserData());
+                    },
+                    tooltip: 'Actualizar',
+                  ),
+                  IconButton(
+                    icon: const Icon(Icons.dashboard),
+                    onPressed: () {
+                      context
+                          .read<AppBloc>()
+                          .add(const AppNavigateTo(AppRoute.dashboard));
+                    },
+                    tooltip: 'Ir al Dashboard',
+                  ),
+                  IconButton(
+                    icon: const Icon(Icons.account_balance_wallet),
+                    onPressed: () {
+                      context
+                          .read<AppBloc>()
+                          .add(const AppNavigateTo(AppRoute.myFunds));
+                    },
+                    tooltip: 'Mis Fondos',
+                  ),
+                ],
+              ),
+              body: state is FundsLoading
+                  ? const Center(child: CircularProgressIndicator())
+                  : state is FundsLoaded
+                      ? LoadingOverlay(
+                          isLoading: state.isLoading,
+                          message: state.isLoading ? 'Procesando...' : null,
+                          child: ResponsiveWidget(
+                            mobile: _buildMobileLayout(context, state),
+                            tablet: _buildTabletLayout(context, state),
+                            desktop: _buildDesktopLayout(context, state),
+                          ),
+                        )
+                      : state is FundsError
+                          ? Center(child: Text('Error: ${state.message}'))
+                          : const Center(child: Text('Cargando...')),
             ),
-            body: state is FundsLoading
-                ? const Center(child: CircularProgressIndicator())
-                : state is FundsLoaded
-                    ? ResponsiveWidget(
-                        mobile: _buildMobileLayout(context, state),
-                        tablet: _buildTabletLayout(context, state),
-                        desktop: _buildDesktopLayout(context, state),
-                      )
-                    : state is FundsError
-                        ? Center(child: Text('Error: ${state.message}'))
-                        : const Center(child: Text('Cargando...')),
           );
         },
       ),

@@ -377,10 +377,10 @@ class FundCard extends StatelessWidget {
                 // Éxito en la cancelación
                 Navigator.of(dialogContext).pop();
                 ScaffoldMessenger.of(context).showSnackBar(
-                  SnackBar(
+                  const SnackBar(
                     content: Text('Suscripción cancelada exitosamente'),
                     backgroundColor: Colors.orange,
-                    duration: const Duration(seconds: 3),
+                    duration: Duration(seconds: 3),
                   ),
                 );
               }

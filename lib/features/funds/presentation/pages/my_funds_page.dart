@@ -5,6 +5,8 @@ import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:fund_manager/core/widgets/responsive_widget.dart';
 import 'package:fund_manager/core/widgets/custom_button.dart';
 import 'package:fund_manager/core/widgets/fund_card.dart';
+import 'package:fund_manager/core/widgets/loading_overlay.dart';
+import 'package:fund_manager/core/widgets/auto_refresh_widget.dart';
 import 'package:fund_manager/core/navigation/app_router.dart';
 import 'package:fund_manager/core/utils/format_utils.dart';
 import 'package:fund_manager/core/blocs/app_bloc.dart';
@@ -24,7 +26,7 @@ class MyFundsPage extends StatelessWidget {
       create: (context) {
         final notificationService = MockNotificationService();
         final userFundsService = MockUserFundsService(notificationService);
-        return FundsBloc(userFundsService);
+        return FundsBloc(userFundsService)..add(const FundsStarted());
       },
       child: const MyFundsView(),
     );
@@ -42,96 +44,132 @@ class _MyFundsViewState extends State<MyFundsView> {
   @override
   void initState() {
     super.initState();
-    // Los datos del usuario ya están cargados en AppBloc
+    // Cargar datos de fondos al inicializar
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      context.read<FundsBloc>().add(const FundsLoadUserFunds());
+      context.read<FundsBloc>().add(const FundsLoadTransactionHistory());
+    });
   }
 
   @override
   Widget build(BuildContext context) {
-    return BlocListener<AppBloc, AppState>(
-      listener: (context, state) {
-        if (state is AppLoaded) {
-          // Mostrar mensajes de error si existen
-          if (state.errorMessage != null && state.errorMessage!.isNotEmpty) {
-            ScaffoldMessenger.of(context).showSnackBar(
-              SnackBar(
-                content: Text(state.errorMessage!),
-                backgroundColor: Colors.red,
-                duration: const Duration(seconds: 4),
+    return MultiBlocListener(
+      listeners: [
+        BlocListener<AppBloc, AppState>(
+          listener: (context, state) {
+            if (state is AppLoaded) {
+              // Mostrar mensajes de error si existen
+              if (state.errorMessage != null && state.errorMessage!.isNotEmpty) {
+                ScaffoldMessenger.of(context).showSnackBar(
+                  SnackBar(
+                    content: Text(state.errorMessage!),
+                    backgroundColor: Colors.red,
+                    duration: const Duration(seconds: 4),
+                  ),
+                );
+              }
+              
+              // Sincronizar datos con el FundsBloc
+              context.read<FundsBloc>().add(FundsSyncWithAppBloc(
+                currentUser: state.currentUser,
+                userFunds: state.userFunds,
+                transactions: state.transactionHistory,
+              ));
+            }
+          },
+        ),
+        BlocListener<FundsBloc, FundsState>(
+          listener: (context, state) {
+            if (state is FundsLoaded && state.errorMessage != null) {
+              ScaffoldMessenger.of(context).showSnackBar(
+                SnackBar(
+                  content: Text(state.errorMessage!),
+                  backgroundColor: Colors.red,
+                  duration: const Duration(seconds: 4),
+                ),
+              );
+            }
+          },
+        ),
+      ],
+              child: BlocBuilder<FundsBloc, FundsState>(
+          builder: (context, fundsState) {
+            return AutoRefreshWidget(
+              child: Scaffold(
+                appBar: AppBar(
+                  title: const Text('Mis Fondos'),
+                  backgroundColor: Theme.of(context).primaryColor,
+                  foregroundColor: Colors.white,
+                  actions: [
+                    IconButton(
+                      icon: const Icon(Icons.refresh),
+                      onPressed: () {
+                        context.read<FundsBloc>().add(const FundsRefresh());
+                        context.read<AppBloc>().add(const AppLoadUserData());
+                      },
+                      tooltip: 'Actualizar',
+                    ),
+                    IconButton(
+                      icon: const Icon(Icons.account_balance),
+                      onPressed: () {
+                        context
+                            .read<AppBloc>()
+                            .add(const AppNavigateTo(AppRoute.funds));
+                      },
+                      tooltip: 'Ver Fondos Disponibles',
+                    ),
+                    IconButton(
+                      icon: const Icon(Icons.history),
+                      onPressed: () => _showTransactionHistory(context),
+                      tooltip: 'Historial de Transacciones',
+                    ),
+                  ],
+                ),
+                body: BlocBuilder<AppBloc, AppState>(
+                  builder: (context, appState) {
+                    if (appState is AppLoaded) {
+                      return LoadingOverlay(
+                        isLoading: appState.isLoading || (fundsState is FundsLoaded && fundsState.isLoading),
+                        message: (appState.isLoading || (fundsState is FundsLoaded && fundsState.isLoading)) 
+                            ? 'Cargando fondos...' : null,
+                        child: _buildContent(context, appState, fundsState),
+                      );
+                    }
+                    return const Center(child: CircularProgressIndicator());
+                  },
+                ),
               ),
             );
-          }
-        }
-      },
-      child: BlocBuilder<FundsBloc, FundsState>(
-        builder: (context, state) {
-          return Scaffold(
-            appBar: AppBar(
-              title: const Text('Mis Fondos'),
-              backgroundColor: Theme.of(context).primaryColor,
-              foregroundColor: Colors.white,
-              actions: [
-                IconButton(
-                  icon: const Icon(Icons.refresh),
-                  onPressed: () {
-                    context.read<FundsBloc>().add(const FundsRefresh());
-                  },
-                  tooltip: 'Actualizar',
-                ),
-                IconButton(
-                  icon: const Icon(Icons.account_balance),
-                  onPressed: () {
-                    context
-                        .read<AppBloc>()
-                        .add(const AppNavigateTo(AppRoute.funds));
-                  },
-                  tooltip: 'Ver Fondos Disponibles',
-                ),
-                IconButton(
-                  icon: const Icon(Icons.history),
-                  onPressed: () => _showTransactionHistory(context),
-                  tooltip: 'Historial de Transacciones',
-                ),
-              ],
-            ),
-            body: BlocBuilder<AppBloc, AppState>(
-              builder: (context, appState) {
-                if (appState is AppLoaded) {
-                  return _buildContent(context, appState);
-                }
-                return const Center(child: CircularProgressIndicator());
-              },
-            ),
-          );
-        },
-      ),
+          },
+        ),
     );
   }
 
-  Widget _buildContent(BuildContext context, AppLoaded state) {
+  Widget _buildContent(BuildContext context, AppLoaded appState, FundsState fundsState) {
     return ResponsiveWidget(
-      mobile: _buildMobileLayout(context, state),
-      tablet: _buildTabletLayout(context, state),
-      desktop: _buildDesktopLayout(context, state),
+      mobile: _buildMobileLayout(context, appState, fundsState),
+      tablet: _buildTabletLayout(context, appState, fundsState),
+      desktop: _buildDesktopLayout(context, appState, fundsState),
     );
   }
 
-  Widget _buildMobileLayout(BuildContext context, AppLoaded state) {
+  Widget _buildMobileLayout(BuildContext context, AppLoaded appState, FundsState fundsState) {
     return SingleChildScrollView(
       padding: EdgeInsets.all(16.w),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          _buildUserInfoCard(context, state.currentUser),
+          _buildUserInfoCard(context, appState.currentUser),
           ResponsiveSpacing(mobileSpacing: 16.h),
-          _buildBalanceCard(context, state.currentUser),
+          _buildBalanceCard(context, appState.currentUser),
           ResponsiveSpacing(mobileSpacing: 16.h),
-          _buildUserFundsList(context, state.userFunds, state),
+          _buildUserFundsList(context, appState.userFunds, appState, fundsState),
         ],
       ),
     );
   }
 
-  Widget _buildTabletLayout(BuildContext context, AppLoaded state) {
+  Widget _buildTabletLayout(BuildContext context, AppLoaded appState, FundsState fundsState) {
     return Row(
       children: [
         Expanded(
@@ -141,22 +179,25 @@ class _MyFundsViewState extends State<MyFundsView> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                _buildUserInfoCard(context, state.currentUser),
+                _buildUserInfoCard(context, appState.currentUser),
                 ResponsiveSpacing(tabletSpacing: 24.h),
-                _buildBalanceCard(context, state.currentUser),
+                _buildBalanceCard(context, appState.currentUser),
               ],
             ),
           ),
         ),
         Expanded(
           flex: 2,
-          child: _buildUserFundsList(context, state.userFunds, state),
+          child: SingleChildScrollView(
+            padding: EdgeInsets.all(16.w),
+            child: _buildUserFundsList(context, appState.userFunds, appState, fundsState),
+          ),
         ),
       ],
     );
   }
 
-  Widget _buildDesktopLayout(BuildContext context, AppLoaded state) {
+  Widget _buildDesktopLayout(BuildContext context, AppLoaded appState, FundsState fundsState) {
     return Row(
       children: [
         Expanded(
@@ -166,16 +207,19 @@ class _MyFundsViewState extends State<MyFundsView> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                _buildUserInfoCard(context, state.currentUser),
+                _buildUserInfoCard(context, appState.currentUser),
                 ResponsiveSpacing(desktopSpacing: 32.h),
-                _buildBalanceCard(context, state.currentUser),
+                _buildBalanceCard(context, appState.currentUser),
               ],
             ),
           ),
         ),
         Expanded(
           flex: 3,
-          child: _buildUserFundsList(context, state.userFunds, state),
+          child: SingleChildScrollView(
+            padding: EdgeInsets.all(16.w),
+            child: _buildUserFundsList(context, appState.userFunds, appState, fundsState),
+          ),
         ),
       ],
     );
@@ -283,7 +327,7 @@ class _MyFundsViewState extends State<MyFundsView> {
   }
 
   Widget _buildUserFundsList(
-      BuildContext context, List<UserFund> userFunds, AppLoaded state) {
+      BuildContext context, List<UserFund> userFunds, AppLoaded appState, FundsState fundsState) {
     if (userFunds.isEmpty) {
       return Center(
         child: Column(
@@ -325,40 +369,34 @@ class _MyFundsViewState extends State<MyFundsView> {
       );
     }
 
-    return BlocBuilder<FundsBloc, FundsState>(
-      builder: (context, fundsState) {
-        if (fundsState is FundsLoaded) {
-          return ListView.builder(
-            padding: EdgeInsets.all(16.w),
-            itemCount: userFunds.length,
-            itemBuilder: (context, index) {
-              final userFund = userFunds[index];
-              // Buscar el fondo completo en el estado
-              final fund = fundsState.allFunds.firstWhere(
-                (f) => f.id.toString() == userFund.fundId,
-                orElse: () => Fund(
-                  id: int.tryParse(userFund.fundId) ?? 0,
-                  name: userFund.fundName,
-                  type: 'FIC',
-                  category: userFund.category,
-                  minAmount: userFund.investedAmount.round(),
-                  value: userFund.currentValue,
-                  performance: userFund.performance,
-                  risk: 'Medio',
-                  status: 'Activo',
-                ),
-              );
-              return FundCard(
-                fund: fund,
-                userFund: userFund,
-                showActions: true,
-              );
-            },
+    if (fundsState is FundsLoaded) {
+      return Column(
+        children: userFunds.map((userFund) {
+          // Buscar el fondo completo en el estado
+          final fund = fundsState.allFunds.firstWhere(
+            (f) => f.id.toString() == userFund.fundId,
+            orElse: () => Fund(
+              id: int.tryParse(userFund.fundId) ?? 0,
+              name: userFund.fundName,
+              type: 'FIC',
+              category: userFund.category,
+              minAmount: userFund.investedAmount.round(),
+              value: userFund.currentValue,
+              performance: userFund.performance,
+              risk: 'Medio',
+              status: 'Activo',
+            ),
           );
-        }
-        return const Center(child: CircularProgressIndicator());
-      },
-    );
+          return FundCard(
+            fund: fund,
+            userFund: userFund,
+            showActions: true,
+          );
+        }).toList(),
+      );
+    }
+    
+    return const Center(child: CircularProgressIndicator());
   }
 
   void _showTransactionHistory(BuildContext context) {

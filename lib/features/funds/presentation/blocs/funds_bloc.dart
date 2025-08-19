@@ -110,6 +110,21 @@ class FundsUpdateNotificationPreference extends FundsEvent {
   List<Object?> get props => [preference];
 }
 
+class FundsSyncWithAppBloc extends FundsEvent {
+  final User? currentUser;
+  final List<UserFund> userFunds;
+  final List<Transaction> transactions;
+
+  const FundsSyncWithAppBloc({
+    this.currentUser,
+    this.userFunds = const [],
+    this.transactions = const [],
+  });
+
+  @override
+  List<Object?> get props => [currentUser, userFunds, transactions];
+}
+
 // Estados
 abstract class FundsState extends Equatable {
   const FundsState();
@@ -278,6 +293,7 @@ class FundsBloc extends Bloc<FundsEvent, FundsState> {
     on<FundsLoadUserFunds>(_onLoadUserFunds);
     on<FundsLoadTransactionHistory>(_onLoadTransactionHistory);
     on<FundsUpdateNotificationPreference>(_onUpdateNotificationPreference);
+    on<FundsSyncWithAppBloc>(_onSyncWithAppBloc);
   }
 
   void _onFundsStarted(FundsStarted event, Emitter<FundsState> emit) {
@@ -605,6 +621,17 @@ class FundsBloc extends Bloc<FundsEvent, FundsState> {
           errorMessage: e.toString(),
         ));
       }
+    }
+  }
+
+  void _onSyncWithAppBloc(FundsSyncWithAppBloc event, Emitter<FundsState> emit) {
+    if (state is FundsLoaded) {
+      final currentState = state as FundsLoaded;
+      emit(currentState.copyWith(
+        currentUser: event.currentUser ?? currentState.currentUser,
+        userFunds: event.userFunds,
+        transactionHistory: event.transactions,
+      ));
     }
   }
 
