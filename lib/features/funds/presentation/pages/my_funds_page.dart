@@ -7,6 +7,7 @@ import 'package:fund_manager/core/widgets/custom_button.dart';
 import 'package:fund_manager/core/widgets/fund_card.dart';
 import 'package:fund_manager/core/widgets/loading_overlay.dart';
 import 'package:fund_manager/core/widgets/auto_refresh_widget.dart';
+import 'package:fund_manager/core/widgets/app_scaffold.dart';
 import 'package:fund_manager/core/navigation/app_router.dart';
 import 'package:fund_manager/core/utils/format_utils.dart';
 import 'package:fund_manager/core/blocs/app_bloc.dart';
@@ -95,36 +96,18 @@ class _MyFundsViewState extends State<MyFundsView> {
               child: BlocBuilder<FundsBloc, FundsState>(
           builder: (context, fundsState) {
             return AutoRefreshWidget(
-              child: Scaffold(
-                appBar: AppBar(
-                  title: const Text('Mis Fondos'),
-                  backgroundColor: Theme.of(context).primaryColor,
-                  foregroundColor: Colors.white,
-                  actions: [
-                    IconButton(
-                      icon: const Icon(Icons.refresh),
-                      onPressed: () {
-                        context.read<FundsBloc>().add(const FundsRefresh());
-                        context.read<AppBloc>().add(const AppLoadUserData());
-                      },
-                      tooltip: 'Actualizar',
-                    ),
-                    IconButton(
-                      icon: const Icon(Icons.account_balance),
-                      onPressed: () {
-                        context
-                            .read<AppBloc>()
-                            .add(const AppNavigateTo(AppRoute.funds));
-                      },
-                      tooltip: 'Ver Fondos Disponibles',
-                    ),
-                    IconButton(
-                      icon: const Icon(Icons.history),
-                      onPressed: () => _showTransactionHistory(context),
-                      tooltip: 'Historial de Transacciones',
-                    ),
-                  ],
-                ),
+              child: AppScaffold(
+                title: 'Mis Fondos',
+                actions: [
+                  IconButton(
+                    icon: const Icon(Icons.refresh),
+                    onPressed: () {
+                      context.read<FundsBloc>().add(const FundsRefresh());
+                      context.read<AppBloc>().add(const AppLoadUserData());
+                    },
+                    tooltip: 'Actualizar',
+                  ),
+                ],
                 body: BlocBuilder<AppBloc, AppState>(
                   builder: (context, appState) {
                     if (appState is AppLoaded) {

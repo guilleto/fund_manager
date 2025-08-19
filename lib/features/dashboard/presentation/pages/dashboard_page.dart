@@ -3,6 +3,7 @@ import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
 import '../../../../core/widgets/responsive_widget.dart';
+import '../../../../core/widgets/app_scaffold.dart';
 import '../../../../core/navigation/app_router.dart';
 import '../../../../core/utils/format_utils.dart';
 import '../../../../core/blocs/app_bloc.dart';
@@ -27,38 +28,16 @@ class DashboardView extends StatelessWidget {
   Widget build(BuildContext context) {
     return BlocBuilder<DashboardBloc, DashboardState>(
       builder: (context, state) {
-        return Scaffold(
-          appBar: AppBar(
-            title: const Text('Dashboard'),
-            backgroundColor: Theme.of(context).primaryColor,
-            foregroundColor: Colors.white,
-            actions: [
-              IconButton(
-                icon: const Icon(Icons.refresh),
-                onPressed: () =>
-                    context.read<DashboardBloc>().add(const DashboardRefresh()),
-                tooltip: 'Actualizar',
-              ),
-              IconButton(
-                icon: const Icon(Icons.account_balance),
-                onPressed: () {
-                  context
-                      .read<AppBloc>()
-                      .add(const AppNavigateTo(AppRoute.funds));
-                },
-                tooltip: 'Ver Fondos',
-              ),
-              IconButton(
-                icon: const Icon(Icons.account_balance_wallet),
-                onPressed: () {
-                  context
-                      .read<AppBloc>()
-                      .add(const AppNavigateTo(AppRoute.myFunds));
-                },
-                tooltip: 'Mis Fondos',
-              ),
-            ],
-          ),
+        return AppScaffold(
+          title: 'Dashboard',
+          actions: [
+            IconButton(
+              icon: const Icon(Icons.refresh),
+              onPressed: () =>
+                  context.read<DashboardBloc>().add(const DashboardRefresh()),
+              tooltip: 'Actualizar',
+            ),
+          ],
           body: state is DashboardLoading
               ? const Center(child: CircularProgressIndicator())
               : state is DashboardLoaded

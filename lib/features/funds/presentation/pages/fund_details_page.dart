@@ -5,6 +5,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:fund_manager/core/widgets/custom_button.dart';
 import 'package:fund_manager/core/widgets/custom_text_field.dart';
 import 'package:fund_manager/core/widgets/responsive_widget.dart';
+import 'package:fund_manager/core/widgets/app_scaffold.dart';
 import 'package:fund_manager/core/utils/format_utils.dart';
 import 'package:fund_manager/core/utils/validation_utils.dart';
 import 'package:fund_manager/core/blocs/app_bloc.dart';
@@ -113,16 +114,9 @@ class _FundDetailsViewState extends State<FundDetailsView> {
           }
         }
       },
-      child: Scaffold(
-        appBar: AppBar(
-          title: Text('Detalles del Fondo'),
-          leading: IconButton(
-            icon: const Icon(Icons.arrow_back),
-            onPressed: () {
-              context.read<AppBloc>().add(const AppNavigateTo(AppRoute.funds));
-            },
-          ),
-        ),
+      child: AppScaffold(
+        title: 'Detalles del Fondo',
+        showDrawer: false, // No mostrar drawer en detalles
         body: ResponsiveWidget(
           mobile: _buildMobileLayout(),
           tablet: _buildTabletDesktopLayout(),

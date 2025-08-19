@@ -7,6 +7,7 @@ import 'package:fund_manager/core/widgets/responsive_widget.dart';
 import 'package:fund_manager/core/widgets/fund_card.dart';
 import 'package:fund_manager/core/widgets/loading_overlay.dart';
 import 'package:fund_manager/core/widgets/auto_refresh_widget.dart';
+import 'package:fund_manager/core/widgets/app_scaffold.dart';
 import 'package:fund_manager/core/navigation/app_router.dart';
 import 'package:fund_manager/core/utils/format_utils.dart';
 import 'package:fund_manager/core/blocs/app_bloc.dart';
@@ -77,12 +78,9 @@ class FundsView extends StatelessWidget {
       ],
       child: BlocBuilder<FundsBloc, FundsState>(
         builder: (context, state) {
-          return AutoRefreshWidget(
-            child: Scaffold(
-              appBar: AppBar(
-                title: const Text('Fondos Disponibles'),
-                backgroundColor: Theme.of(context).primaryColor,
-                foregroundColor: Colors.white,
+                      return AutoRefreshWidget(
+              child: AppScaffold(
+                title: 'Fondos Disponibles',
                 actions: [
                   IconButton(
                     icon: const Icon(Icons.refresh),
@@ -92,26 +90,7 @@ class FundsView extends StatelessWidget {
                     },
                     tooltip: 'Actualizar',
                   ),
-                  IconButton(
-                    icon: const Icon(Icons.dashboard),
-                    onPressed: () {
-                      context
-                          .read<AppBloc>()
-                          .add(const AppNavigateTo(AppRoute.dashboard));
-                    },
-                    tooltip: 'Ir al Dashboard',
-                  ),
-                  IconButton(
-                    icon: const Icon(Icons.account_balance_wallet),
-                    onPressed: () {
-                      context
-                          .read<AppBloc>()
-                          .add(const AppNavigateTo(AppRoute.myFunds));
-                    },
-                    tooltip: 'Mis Fondos',
-                  ),
                 ],
-              ),
               body: state is FundsLoading
                   ? const Center(child: CircularProgressIndicator())
                   : state is FundsLoaded
