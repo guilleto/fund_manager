@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
-import '../blocs/app_bloc.dart';
+import 'package:fund_manager/core/blocs/app_bloc.dart';
+import 'package:fund_manager/core/services/user_service.dart';
+import 'package:fund_manager/core/services/notification_service.dart';
 
 class AppProvider extends StatelessWidget {
   final Widget child;
@@ -13,9 +15,21 @@ class AppProvider extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return BlocProvider<AppBloc>(
-      create: (context) => AppBloc()..add(const AppStarted()),
-      child: child,
+    return MultiRepositoryProvider(
+      providers: [
+        RepositoryProvider<UserService>(
+          create: (context) => MockUserService(MockNotificationService()),
+        ),
+        RepositoryProvider<NotificationService>(
+          create: (context) => MockNotificationService(),
+        ),
+      ],
+      child: BlocProvider<AppBloc>(
+        create: (context) => AppBloc(
+          context.read<UserService>(),
+        )..add(const AppStarted()),
+        child: child,
+      ),
     );
   }
 }

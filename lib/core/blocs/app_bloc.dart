@@ -1,11 +1,11 @@
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:equatable/equatable.dart';
 import '../navigation/app_router.dart';
+import '../services/user_service.dart';
 import '../../features/funds/domain/models/user.dart';
 import '../../features/funds/domain/models/user_fund.dart';
 import '../../features/funds/domain/models/transaction.dart';
-import '../../features/funds/domain/services/user_funds_service.dart';
-import '../../features/funds/domain/services/notification_service.dart';
+import '../../features/funds/domain/models/fund.dart';
 
 // Eventos
 abstract class AppEvent extends Equatable {
@@ -33,12 +33,12 @@ class AppNavigateBack extends AppEvent {
   const AppNavigateBack();
 }
 
-class AppLoadUserData extends AppEvent {
-  const AppLoadUserData();
+class AppRefreshData extends AppEvent {
+  const AppRefreshData();
 }
 
 class AppSubscribeToFund extends AppEvent {
-  final dynamic fund;
+  final Fund fund;
   final double amount;
 
   const AppSubscribeToFund({
@@ -60,7 +60,7 @@ class AppCancelFund extends AppEvent {
 }
 
 class AppUpdateNotificationPreference extends AppEvent {
-  final dynamic preference;
+  final NotificationPreference preference;
 
   const AppUpdateNotificationPreference(this.preference);
 
@@ -80,13 +80,17 @@ class AppInitial extends AppState {
   const AppInitial();
 }
 
+class AppLoading extends AppState {
+  const AppLoading();
+}
+
 class AppLoaded extends AppState {
   final AppRoute currentRoute;
   final bool canGoBack;
   final Map<String, dynamic>? arguments;
   final User? currentUser;
   final List<UserFund> userFunds;
-  final List<Transaction> transactionHistory;
+  final List<Transaction> transactions;
   final bool isLoading;
   final String? errorMessage;
 
@@ -96,22 +100,10 @@ class AppLoaded extends AppState {
     this.arguments,
     this.currentUser,
     this.userFunds = const [],
-    this.transactionHistory = const [],
+    this.transactions = const [],
     this.isLoading = false,
     this.errorMessage,
   });
-
-  @override
-  List<Object?> get props => [
-        currentRoute,
-        canGoBack,
-        arguments,
-        currentUser,
-        userFunds,
-        transactionHistory,
-        isLoading,
-        errorMessage
-      ];
 
   AppLoaded copyWith({
     AppRoute? currentRoute,
@@ -119,7 +111,7 @@ class AppLoaded extends AppState {
     Map<String, dynamic>? arguments,
     User? currentUser,
     List<UserFund>? userFunds,
-    List<Transaction>? transactionHistory,
+    List<Transaction>? transactions,
     bool? isLoading,
     String? errorMessage,
   }) {
@@ -129,57 +121,65 @@ class AppLoaded extends AppState {
       arguments: arguments ?? this.arguments,
       currentUser: currentUser ?? this.currentUser,
       userFunds: userFunds ?? this.userFunds,
-      transactionHistory: transactionHistory ?? this.transactionHistory,
+      transactions: transactions ?? this.transactions,
       isLoading: isLoading ?? this.isLoading,
       errorMessage: errorMessage,
     );
   }
+
+  @override
+  List<Object?> get props => [
+        currentRoute,
+        canGoBack,
+        arguments,
+        currentUser,
+        userFunds,
+        transactions,
+        isLoading,
+        errorMessage,
+      ];
+}
+
+class AppError extends AppState {
+  final String message;
+
+  const AppError({required this.message});
+
+  @override
+  List<Object?> get props => [message];
 }
 
 // BLoC
 class AppBloc extends Bloc<AppEvent, AppState> {
-  final UserFundsService _userFundsService;
+  final UserService _userService;
 
-  AppBloc()
-      : _userFundsService = MockUserFundsService(MockNotificationService()),
-        super(const AppInitial()) {
+  AppBloc(this._userService) : super(const AppInitial()) {
     on<AppStarted>(_onAppStarted);
     on<AppNavigateTo>(_onNavigateTo);
     on<AppNavigateBack>(_onNavigateBack);
-    on<AppLoadUserData>(_onLoadUserData);
+    on<AppRefreshData>(_onRefreshData);
     on<AppSubscribeToFund>(_onSubscribeToFund);
     on<AppCancelFund>(_onCancelFund);
     on<AppUpdateNotificationPreference>(_onUpdateNotificationPreference);
   }
 
   void _onAppStarted(AppStarted event, Emitter<AppState> emit) async {
-    emit(const AppLoaded(
-      currentRoute: AppRoute.welcome,
-      canGoBack: false,
-      isLoading: true,
-    ));
-
-    // Cargar datos del usuario al iniciar la app
+    emit(const AppLoading());
+    
     try {
-      final user = await _userFundsService.getCurrentUser();
-      final userFunds = await _userFundsService.getUserFunds();
-      final transactions = await _userFundsService.getTransactionHistory();
-
+      final user = await _userService.getCurrentUser();
+      final userFunds = await _userService.getUserFunds();
+      final transactions = await _userService.getTransactionHistory();
+      
       emit(AppLoaded(
         currentRoute: AppRoute.welcome,
         canGoBack: false,
         currentUser: user,
         userFunds: userFunds,
-        transactionHistory: transactions,
-        isLoading: false,
+        transactions: transactions,
       ));
     } catch (e) {
-      emit(AppLoaded(
-        currentRoute: AppRoute.welcome,
-        canGoBack: false,
-        isLoading: false,
-        errorMessage: e.toString(),
-      ));
+      emit(AppError(message: e.toString()));
     }
   }
 
@@ -198,91 +198,64 @@ class AppBloc extends Bloc<AppEvent, AppState> {
   void _onNavigateBack(AppNavigateBack event, Emitter<AppState> emit) {
     if (state is AppLoaded) {
       final currentState = state as AppLoaded;
-      if (currentState.canGoBack) {
-        AppRoute previousRoute;
-        switch (currentState.currentRoute) {
-          case AppRoute.dashboard:
-            previousRoute = AppRoute.welcome;
-            break;
-          case AppRoute.funds:
-          case AppRoute.myFunds:
-          case AppRoute.fundDetails:
-            previousRoute = AppRoute.dashboard;
-            break;
-          default:
-            previousRoute = AppRoute.welcome;
-        }
-
-        emit(currentState.copyWith(
-          currentRoute: previousRoute,
-          canGoBack: previousRoute != AppRoute.welcome,
-          arguments: null,
-        ));
-      }
+      // Lógica de navegación hacia atrás
+      emit(currentState.copyWith(
+        currentRoute: AppRoute.welcome, // Simplificado
+        canGoBack: false,
+      ));
     }
   }
 
-  void _onLoadUserData(AppLoadUserData event, Emitter<AppState> emit) async {
+  void _onRefreshData(AppRefreshData event, Emitter<AppState> emit) async {
     if (state is AppLoaded) {
       final currentState = state as AppLoaded;
       emit(currentState.copyWith(isLoading: true));
-
+      
       try {
-        final user = await _userFundsService.getCurrentUser();
-        final userFunds = await _userFundsService.getUserFunds();
-        final transactions = await _userFundsService.getTransactionHistory();
-
+        final user = await _userService.getCurrentUser();
+        final userFunds = await _userService.getUserFunds();
+        final transactions = await _userService.getTransactionHistory();
+        
         emit(currentState.copyWith(
           currentUser: user,
           userFunds: userFunds,
-          transactionHistory: transactions,
+          transactions: transactions,
           isLoading: false,
-          errorMessage: null,
         ));
       } catch (e) {
-        print('Error al cargar datos del usuario: $e');
         emit(currentState.copyWith(
           isLoading: false,
-          errorMessage: 'Error al cargar los datos. Por favor, intenta de nuevo.',
+          errorMessage: e.toString(),
         ));
       }
     }
   }
 
-  void _onSubscribeToFund(
-      AppSubscribeToFund event, Emitter<AppState> emit) async {
+  void _onSubscribeToFund(AppSubscribeToFund event, Emitter<AppState> emit) async {
     if (state is AppLoaded) {
       final currentState = state as AppLoaded;
-      emit(currentState.copyWith(isLoading: true, errorMessage: null));
-
+      emit(currentState.copyWith(isLoading: true));
+      
       try {
-        final success = await _userFundsService.subscribeToFund(
+        final success = await _userService.subscribeToFund(
           fund: event.fund,
           amount: event.amount,
         );
-
+        
         if (success) {
-          // Recargar datos del usuario
-          final user = await _userFundsService.getCurrentUser();
-          final userFunds = await _userFundsService.getUserFunds();
-          final transactions = await _userFundsService.getTransactionHistory();
-
+          // Recargar datos actualizados
+          final user = await _userService.getCurrentUser();
+          final userFunds = await _userService.getUserFunds();
+          final transactions = await _userService.getTransactionHistory();
+          
           emit(currentState.copyWith(
             currentUser: user,
             userFunds: userFunds,
-            transactionHistory: transactions,
+            transactions: transactions,
             isLoading: false,
-            errorMessage: null,
-          ));
-        } else {
-          emit(currentState.copyWith(
-            isLoading: false,
-            errorMessage:
-                'No se pudo completar la suscripción. Verifica tu saldo.',
           ));
         }
       } catch (e) {
-        print('Error en suscripción a fondo: $e');
         emit(currentState.copyWith(
           isLoading: false,
           errorMessage: e.toString(),
@@ -294,33 +267,25 @@ class AppBloc extends Bloc<AppEvent, AppState> {
   void _onCancelFund(AppCancelFund event, Emitter<AppState> emit) async {
     if (state is AppLoaded) {
       final currentState = state as AppLoaded;
-      emit(currentState.copyWith(isLoading: true, errorMessage: null));
-
+      emit(currentState.copyWith(isLoading: true));
+      
       try {
-        final success =
-            await _userFundsService.cancelFund(userFund: event.userFund);
-
+        final success = await _userService.cancelFund(userFund: event.userFund);
+        
         if (success) {
-          // Recargar datos del usuario
-          final user = await _userFundsService.getCurrentUser();
-          final userFunds = await _userFundsService.getUserFunds();
-          final transactions = await _userFundsService.getTransactionHistory();
-
+          // Recargar datos actualizados
+          final user = await _userService.getCurrentUser();
+          final userFunds = await _userService.getUserFunds();
+          final transactions = await _userService.getTransactionHistory();
+          
           emit(currentState.copyWith(
             currentUser: user,
             userFunds: userFunds,
-            transactionHistory: transactions,
+            transactions: transactions,
             isLoading: false,
-            errorMessage: null,
-          ));
-        } else {
-          emit(currentState.copyWith(
-            isLoading: false,
-            errorMessage: 'No se pudo completar la cancelación.',
           ));
         }
       } catch (e) {
-        print('Error en cancelación de fondo: $e');
         emit(currentState.copyWith(
           isLoading: false,
           errorMessage: e.toString(),
@@ -329,31 +294,24 @@ class AppBloc extends Bloc<AppEvent, AppState> {
     }
   }
 
-  void _onUpdateNotificationPreference(
-      AppUpdateNotificationPreference event, Emitter<AppState> emit) async {
+  void _onUpdateNotificationPreference(AppUpdateNotificationPreference event, Emitter<AppState> emit) async {
     if (state is AppLoaded) {
       final currentState = state as AppLoaded;
       emit(currentState.copyWith(isLoading: true));
-
+      
       try {
-        final success = await _userFundsService.updateNotificationPreference(
+        final success = await _userService.updateNotificationPreference(
           preference: event.preference,
         );
-
+        
         if (success) {
-          final user = await _userFundsService.getCurrentUser();
+          final user = await _userService.getCurrentUser();
           emit(currentState.copyWith(
             currentUser: user,
             isLoading: false,
           ));
-        } else {
-          emit(currentState.copyWith(
-            isLoading: false,
-            errorMessage: 'No se pudo actualizar la preferencia de notificación.',
-          ));
         }
       } catch (e) {
-        print('Error al actualizar preferencia de notificación: $e');
         emit(currentState.copyWith(
           isLoading: false,
           errorMessage: e.toString(),

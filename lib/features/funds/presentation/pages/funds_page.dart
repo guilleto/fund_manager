@@ -8,13 +8,11 @@ import 'package:fund_manager/core/widgets/fund_card.dart';
 import 'package:fund_manager/core/widgets/loading_overlay.dart';
 import 'package:fund_manager/core/widgets/auto_refresh_widget.dart';
 import 'package:fund_manager/core/widgets/app_scaffold.dart';
-import 'package:fund_manager/core/navigation/app_router.dart';
 import 'package:fund_manager/core/utils/format_utils.dart';
 import 'package:fund_manager/core/blocs/app_bloc.dart';
 import 'package:fund_manager/features/funds/presentation/blocs/funds_bloc.dart';
 import 'package:fund_manager/features/funds/domain/models/fund.dart';
-import 'package:fund_manager/features/funds/domain/services/user_funds_service.dart';
-import 'package:fund_manager/features/funds/domain/services/notification_service.dart';
+import 'package:fund_manager/core/services/user_service.dart';
 
 class FundsPage extends StatelessWidget {
   const FundsPage({super.key});
@@ -22,11 +20,7 @@ class FundsPage extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return BlocProvider(
-      create: (context) {
-        final notificationService = MockNotificationService();
-        final userFundsService = MockUserFundsService(notificationService);
-        return FundsBloc(userFundsService)..add(const FundsStarted());
-      },
+      create: (context) => FundsBloc(context.read<UserService>())..add(const FundsStarted()),
       child: const FundsView(),
     );
   }
@@ -57,7 +51,7 @@ class FundsView extends StatelessWidget {
               context.read<FundsBloc>().add(FundsSyncWithAppBloc(
                 currentUser: state.currentUser,
                 userFunds: state.userFunds,
-                transactions: state.transactionHistory,
+                transactions: state.transactions,
               ));
             }
           },
@@ -76,330 +70,124 @@ class FundsView extends StatelessWidget {
           },
         ),
       ],
-      child: BlocBuilder<FundsBloc, FundsState>(
-        builder: (context, state) {
-                      return AutoRefreshWidget(
-              child: AppScaffold(
-                title: 'Fondos Disponibles',
-                actions: [
-                  IconButton(
-                    icon: const Icon(Icons.refresh),
-                    onPressed: () {
-                      context.read<FundsBloc>().add(const FundsRefresh());
-                      context.read<AppBloc>().add(const AppLoadUserData());
-                    },
-                    tooltip: 'Actualizar',
+      child: BlocBuilder<AppBloc, AppState>(
+        builder: (context, appState) {
+          if (appState is AppLoaded) {
+            return BlocBuilder<FundsBloc, FundsState>(
+              builder: (context, fundsState) {
+                return AutoRefreshWidget(
+                  child: AppScaffold(
+                    title: 'Fondos Disponibles',
+                    actions: [
+                      IconButton(
+                        icon: const Icon(Icons.refresh),
+                        onPressed: () {
+                          context.read<FundsBloc>().add(const FundsRefresh());
+                          context.read<AppBloc>().add(const AppRefreshData());
+                        },
+                        tooltip: 'Actualizar',
+                      ),
+                    ],
+                    body: fundsState is FundsLoading
+                        ? const Center(child: CircularProgressIndicator())
+                        : fundsState is FundsLoaded
+                            ? LoadingOverlay(
+                                isLoading: appState.isLoading,
+                                message: appState.isLoading ? 'Procesando...' : null,
+                                child: ResponsiveWidget(
+                                  mobile: _buildMobileLayout(context, fundsState, appState),
+                                  tablet: _buildTabletLayout(context, fundsState, appState),
+                                  desktop: _buildDesktopLayout(context, fundsState, appState),
+                                ),
+                              )
+                            : const Center(child: Text('Error al cargar fondos')),
                   ),
-                ],
-              body: state is FundsLoading
-                  ? const Center(child: CircularProgressIndicator())
-                  : state is FundsLoaded
-                      ? LoadingOverlay(
-                          isLoading: state.isLoading,
-                          message: state.isLoading ? 'Procesando...' : null,
-                          child: ResponsiveWidget(
-                            mobile: _buildMobileLayout(context, state),
-                            tablet: _buildTabletLayout(context, state),
-                            desktop: _buildDesktopLayout(context, state),
-                          ),
-                        )
-                      : state is FundsError
-                          ? Center(child: Text('Error: ${state.message}'))
-                          : const Center(child: Text('Cargando...')),
-            ),
-          );
+                );
+              },
+            );
+          }
+          return const Center(child: CircularProgressIndicator());
         },
       ),
     );
   }
 
-  Widget _buildMobileLayout(BuildContext context, FundsLoaded state) {
-    return SingleChildScrollView(
-      padding: EdgeInsets.all(20.w),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          _buildSummaryCard(state.summary),
-          SizedBox(height: 24.h),
-          _buildFiltersAndSorting(context, state),
-          SizedBox(height: 16.h),
-          _buildFundsList(context, state),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildTabletLayout(BuildContext context, FundsLoaded state) {
-    return Padding(
-      padding: EdgeInsets.all(24.w),
-      child: Column(
-        children: [
-          _buildSummaryCard(state.summary),
-          SizedBox(height: 24.h),
-          _buildFiltersAndSorting(context, state),
-          SizedBox(height: 16.h),
-          Expanded(
-            child: _buildFundsList(context, state),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildDesktopLayout(BuildContext context, FundsLoaded state) {
-    return Padding(
-      padding: EdgeInsets.all(32.w),
-      child: Column(
-        children: [
-          _buildSummaryCard(state.summary),
-          SizedBox(height: 32.h),
-          _buildFiltersAndSorting(context, state),
-          SizedBox(height: 16.h),
-          Expanded(
-            child: _buildFundsList(context, state),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildSummaryCard(FundsSummary summary) {
-    return Card(
-      elevation: 4,
-      child: Padding(
-        padding: EdgeInsets.all(20.w),
-        child: Column(
-          children: [
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        'Total Fondos',
-                        style: TextStyle(
-                          fontSize: 14.sp,
-                          color: Colors.grey[600],
-                        ),
-                      ),
-                      SizedBox(height: 4.h),
-                      Text(
-                        '${summary.totalFunds}',
-                        style: TextStyle(
-                          fontSize: 24.sp,
-                          fontWeight: FontWeight.bold,
-                          color: Colors.blue,
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-                SizedBox(width: 16.w),
-                Column(
-                  crossAxisAlignment: CrossAxisAlignment.end,
-                  children: [
-                    Text(
-                      'Categorías',
-                      style: TextStyle(
-                        fontSize: 14.sp,
-                        color: Colors.grey[600],
-                      ),
-                    ),
-                    SizedBox(height: 4.h),
-                    Text(
-                      '${summary.uniqueCategories}',
-                      style: TextStyle(
-                        fontSize: 20.sp,
-                        fontWeight: FontWeight.bold,
-                        color: Colors.green,
-                      ),
-                    ),
-                  ],
-                ),
-              ],
-            ),
-            SizedBox(height: 16.h),
-            Row(
-              children: [
-                Expanded(
-                  child: _buildSummaryItem('FPV', '${summary.fpvCount}'),
-                ),
-                SizedBox(width: 12.w),
-                Expanded(
-                  child: _buildSummaryItem('FIC', '${summary.ficCount}'),
-                ),
-                SizedBox(width: 12.w),
-                Expanded(
-                  child: _buildSummaryItem('Mín. Promedio',
-                      '\$${FormatUtils.formatAmountInt(summary.averageMinAmount)}'),
-                ),
-              ],
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-
-  Widget _buildSummaryItem(String label, String value) {
+  Widget _buildMobileLayout(BuildContext context, FundsLoaded state, AppLoaded appState) {
     return Column(
       children: [
-        Text(
-          value,
-          style: TextStyle(
-            fontSize: 16.sp,
-            fontWeight: FontWeight.bold,
-          ),
-        ),
-        SizedBox(height: 4.h),
-        Text(
-          label,
-          style: TextStyle(
-            fontSize: 10.sp,
-            color: Colors.grey[600],
-            height: 1.2,
-          ),
-          textAlign: TextAlign.center,
-          maxLines: 2,
-          overflow: TextOverflow.ellipsis,
+        _buildFiltersSection(context, state),
+        Expanded(
+          child: _buildFundsList(context, state, appState),
         ),
       ],
     );
   }
 
-  Widget _buildFundsList(BuildContext context, FundsLoaded state) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
+  Widget _buildTabletLayout(BuildContext context, FundsLoaded state, AppLoaded appState) {
+    return Row(
       children: [
-        Row(
-          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-          children: [
-            Text(
-              'Fondos Disponibles',
-              style: TextStyle(
-                fontSize: 20.sp,
-                fontWeight: FontWeight.bold,
-              ),
-            ),
-            CustomButton(
-              text: 'Filtrar',
-              onPressed: () {
-                // Aquí iría la lógica para filtrar fondos
-              },
-              type: ButtonType.outline,
-            ),
-          ],
+        Expanded(
+          flex: 1,
+          child: _buildFiltersSection(context, state),
         ),
-        SizedBox(height: 16.h),
-        BlocBuilder<AppBloc, AppState>(
-          builder: (context, appState) {
-            if (appState is AppLoaded) {
-              return ListView.builder(
-                shrinkWrap: true,
-                physics: const NeverScrollableScrollPhysics(),
-                itemCount: state.filteredFunds.length,
-                itemBuilder: (context, index) {
-                  final fund = state.filteredFunds[index];
-                  final userFund = appState.userFunds
-                      .where(
-                        (uf) => uf.fundId == fund.id && uf.isActive,
-                      )
-                      .firstOrNull;
-                  return FundCard(
-                    fund: fund,
-                    userFund: userFund,
-                  );
-                },
-              );
-            }
-            return const SizedBox.shrink();
-          },
+        Expanded(
+          flex: 2,
+          child: _buildFundsList(context, state, appState),
         ),
       ],
     );
   }
 
-  Widget _buildFiltersAndSorting(BuildContext context, FundsLoaded state) {
+  Widget _buildDesktopLayout(BuildContext context, FundsLoaded state, AppLoaded appState) {
+    return Row(
+      children: [
+        Expanded(
+          flex: 1,
+          child: _buildFiltersSection(context, state),
+        ),
+        Expanded(
+          flex: 3,
+          child: _buildFundsList(context, state, appState),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildFiltersSection(BuildContext context, FundsLoaded state) {
     return Card(
+      margin: EdgeInsets.all(16.w),
       child: Padding(
         padding: EdgeInsets.all(16.w),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
+            Text(
+              'Filtros',
+              style: TextStyle(
+                fontSize: 18.sp,
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+            SizedBox(height: 16.h),
+            _buildCategoryFilter(context, state),
+            SizedBox(height: 12.h),
+            _buildRiskFilter(context, state),
+            SizedBox(height: 12.h),
+            _buildMinAmountFilter(context, state),
+            SizedBox(height: 16.h),
             Row(
               children: [
-                Icon(Icons.filter_list, size: 20.sp),
-                SizedBox(width: 8.w),
-                Text(
-                  'Filtros y Ordenamiento',
-                  style: TextStyle(
-                    fontSize: 16.sp,
-                    fontWeight: FontWeight.w600,
-                  ),
-                ),
-                const Spacer(),
-                if (state.filters.hasFilters)
-                  TextButton.icon(
+                Expanded(
+                  child: CustomButton(
                     onPressed: () {
                       context.read<FundsBloc>().add(const FundsClearFilters());
                     },
-                    icon: const Icon(Icons.clear, size: 16),
-                    label: const Text('Limpiar'),
+                    text: 'Limpiar',
+                    type: ButtonType.outline,
                   ),
+                ),
               ],
             ),
-            SizedBox(height: 16.h),
-            ResponsiveWidget(
-              mobile: Column(
-                children: [
-                  _buildCategoryFilter(context, state),
-                  SizedBox(height: 12.h),
-                  _buildRiskFilter(context, state),
-                  SizedBox(height: 12.h),
-                  _buildSortingDropdown(context, state),
-                ],
-              ),
-              tablet: Wrap(
-                spacing: 12.w,
-                runSpacing: 16.h,
-                children: [
-                  SizedBox(
-                    width: 200.w,
-                    child: _buildCategoryFilter(context, state),
-                  ),
-                  SizedBox(
-                    width: 200.w,
-                    child: _buildRiskFilter(context, state),
-                  ),
-                  SizedBox(
-                    width: 200.w,
-                    child: _buildSortingDropdown(context, state),
-                  ),
-                ],
-              ),
-              desktop: Wrap(
-                spacing: 12.w,
-                runSpacing: 16.h,
-                children: [
-                  SizedBox(
-                    width: 200.w,
-                    child: _buildCategoryFilter(context, state),
-                  ),
-                  SizedBox(
-                    width: 200.w,
-                    child: _buildRiskFilter(context, state),
-                  ),
-                  SizedBox(
-                    width: 200.w,
-                    child: _buildSortingDropdown(context, state),
-                  ),
-                ],
-              ),
-            ),
-            SizedBox(height: 16.h),
-            _buildMinAmountFilter(context, state),
           ],
         ),
       ),
@@ -407,277 +195,239 @@ class FundsView extends StatelessWidget {
   }
 
   Widget _buildCategoryFilter(BuildContext context, FundsLoaded state) {
-    final categories = ['FPV', 'FIC'];
-
-    return DropdownButtonFormField<String>(
-      value: state.filters.category,
-      decoration: InputDecoration(
-        labelText: 'Categoría',
-        border: const OutlineInputBorder(),
-        contentPadding: EdgeInsets.symmetric(horizontal: 12.w, vertical: 8.h),
-      ),
-      items: [
-        const DropdownMenuItem<String>(
-          value: null,
-          child: Text('Todas'),
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          'Categoría',
+          style: TextStyle(fontSize: 14.sp, fontWeight: FontWeight.w500),
         ),
-        ...categories.map((category) => DropdownMenuItem<String>(
-              value: category,
-              child: Text(category),
-            )),
+        SizedBox(height: 8.h),
+        DropdownButtonFormField<String>(
+          value: state.filters.category,
+          decoration: const InputDecoration(
+            border: OutlineInputBorder(),
+            contentPadding: EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+          ),
+          hint: const Text('Todas las categorías'),
+          items: [
+            const DropdownMenuItem(value: null, child: Text('Todas las categorías')),
+            const DropdownMenuItem(value: 'FPV', child: Text('FPV')),
+            const DropdownMenuItem(value: 'FIC', child: Text('FIC')),
+          ],
+          onChanged: (value) {
+            context.read<FundsBloc>().add(FundsFilterByCategory(category: value));
+          },
+        ),
       ],
-      onChanged: (value) {
-        context.read<FundsBloc>().add(FundsFilterByCategory(category: value));
-      },
     );
   }
 
   Widget _buildRiskFilter(BuildContext context, FundsLoaded state) {
-    final risks = ['Bajo', 'Medio', 'Medio-Alto', 'Alto'];
-
-    return DropdownButtonFormField<String>(
-      value: state.filters.risk,
-      decoration: InputDecoration(
-        labelText: 'Riesgo',
-        border: const OutlineInputBorder(),
-        contentPadding: EdgeInsets.symmetric(horizontal: 12.w, vertical: 8.h),
-      ),
-      items: [
-        const DropdownMenuItem<String>(
-          value: null,
-          child: Text('Todos'),
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          'Riesgo',
+          style: TextStyle(fontSize: 14.sp, fontWeight: FontWeight.w500),
         ),
-        ...risks.map((risk) => DropdownMenuItem<String>(
-              value: risk,
-              child: Text(risk),
-            )),
+        SizedBox(height: 8.h),
+        DropdownButtonFormField<String>(
+          value: state.filters.risk,
+          decoration: const InputDecoration(
+            border: OutlineInputBorder(),
+            contentPadding: EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+          ),
+          hint: const Text('Todos los riesgos'),
+          items: [
+            const DropdownMenuItem(value: null, child: Text('Todos los riesgos')),
+            const DropdownMenuItem(value: 'Bajo', child: Text('Bajo')),
+            const DropdownMenuItem(value: 'Medio', child: Text('Medio')),
+            const DropdownMenuItem(value: 'Medio-Alto', child: Text('Medio-Alto')),
+            const DropdownMenuItem(value: 'Alto', child: Text('Alto')),
+          ],
+          onChanged: (value) {
+            context.read<FundsBloc>().add(FundsFilterByRisk(risk: value));
+          },
+        ),
       ],
-      onChanged: (value) {
-        context.read<FundsBloc>().add(FundsFilterByRisk(risk: value));
-      },
     );
   }
 
   Widget _buildMinAmountFilter(BuildContext context, FundsLoaded state) {
-    // Obtener el rango de montos mínimos de todos los fondos
-    final allFunds = state.allFunds;
-    final minAmount = allFunds.isEmpty
-        ? 0
-        : allFunds.map((f) => f.minAmount).reduce((a, b) => a < b ? a : b);
-    final maxAmount = allFunds.isEmpty
-        ? 100000
-        : allFunds.map((f) => f.minAmount).reduce((a, b) => a > b ? a : b);
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          'Monto mínimo',
+          style: TextStyle(fontSize: 14.sp, fontWeight: FontWeight.w500),
+        ),
+        SizedBox(height: 8.h),
+        DropdownButtonFormField<int>(
+          value: state.filters.minAmount,
+          decoration: const InputDecoration(
+            border: OutlineInputBorder(),
+            contentPadding: EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+          ),
+          hint: const Text('Cualquier monto'),
+          items: [
+            const DropdownMenuItem(value: null, child: Text('Cualquier monto')),
+            const DropdownMenuItem(value: 50000, child: Text('\$50,000')),
+            const DropdownMenuItem(value: 75000, child: Text('\$75,000')),
+            const DropdownMenuItem(value: 100000, child: Text('\$100,000')),
+            const DropdownMenuItem(value: 125000, child: Text('\$125,000')),
+            const DropdownMenuItem(value: 250000, child: Text('\$250,000')),
+          ],
+          onChanged: (value) {
+            context.read<FundsBloc>().add(FundsFilterByMinAmount(minAmount: value));
+          },
+        ),
+      ],
+    );
+  }
 
-    // Valor actual del filtro o el mínimo si no hay filtro
-    final currentValue = state.filters.minAmount ?? minAmount;
-
-    // Determinar si el filtro está activo (no es el valor mínimo)
-    final isFilterActive =
-        state.filters.minAmount != null && state.filters.minAmount! > minAmount;
-
-    return Container(
-      width: double.infinity,
-      constraints: BoxConstraints(
-        minHeight: 100.h,
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              Text(
-                'Monto Mínimo',
-                style: TextStyle(
-                  fontSize: 14.sp,
-                  fontWeight: FontWeight.w500,
-                ),
-              ),
-              if (isFilterActive)
-                TextButton(
-                  onPressed: () {
-                    context
-                        .read<FundsBloc>()
-                        .add(const FundsFilterByMinAmount(minAmount: null));
+  Widget _buildFundsList(BuildContext context, FundsLoaded state, AppLoaded appState) {
+    return Column(
+      children: [
+        _buildSummarySection(context, state),
+        Expanded(
+          child: state.filteredFunds.isEmpty
+              ? const Center(
+                  child: Text('No se encontraron fondos con los filtros aplicados'),
+                )
+              : ListView.builder(
+                  padding: EdgeInsets.all(16.w),
+                  itemCount: state.filteredFunds.length,
+                  itemBuilder: (context, index) {
+                    final fund = state.filteredFunds[index];
+                    final isSubscribed = appState.userFunds.any(
+                      (userFund) => userFund.fundId == fund.id.toString() && userFund.isActive,
+                    );
+                    
+                    return FundCard(
+                      fund: fund,
+                      userFund: isSubscribed ? appState.userFunds.firstWhere(
+                        (userFund) => userFund.fundId == fund.id.toString() && userFund.isActive,
+                      ) : null,
+                      onSubscribe: () {
+                        // Mostrar diálogo para ingresar monto
+                        _showSubscriptionDialog(context, fund);
+                      },
+                    );
                   },
-                  child: Text(
-                    'Limpiar',
-                    style: TextStyle(fontSize: 12.sp),
-                  ),
                 ),
-            ],
-          ),
-          SizedBox(height: 12.h),
-          SliderTheme(
-            data: SliderTheme.of(context).copyWith(
-              activeTrackColor: Theme.of(context).primaryColor,
-              inactiveTrackColor: Colors.grey[300],
-              thumbColor: Theme.of(context).primaryColor,
-              overlayColor: Theme.of(context).primaryColor.withOpacity(0.2),
-              valueIndicatorColor: Theme.of(context).primaryColor,
-              valueIndicatorTextStyle: TextStyle(
-                color: Colors.white,
-                fontSize: 12.sp,
-                fontWeight: FontWeight.w600,
+        ),
+      ],
+    );
+  }
+
+  Widget _buildSummarySection(BuildContext context, FundsLoaded state) {
+    return Card(
+      margin: EdgeInsets.all(16.w),
+      child: Padding(
+        padding: EdgeInsets.all(16.w),
+        child: Row(
+          children: [
+            Expanded(
+              child: _buildSummaryItem(
+                'Total Fondos',
+                state.summary.totalFunds.toString(),
+                Icons.account_balance,
               ),
             ),
-            child: Slider(
-              value: currentValue.toDouble(),
-              min: minAmount.toDouble(),
-              max: maxAmount.toDouble(),
-              divisions: 10, // 10 divisiones para mejor control
-              label: FormatUtils.formatAmountInt(currentValue),
-              onChanged: (value) {
-                context
-                    .read<FundsBloc>()
-                    .add(FundsFilterByMinAmount(minAmount: value.toInt()));
-              },
+            Expanded(
+              child: _buildSummaryItem(
+                'FPV',
+                state.summary.fpvCount.toString(),
+                Icons.pie_chart,
+              ),
             ),
-          ),
-          Padding(
-            padding: EdgeInsets.symmetric(horizontal: 8.w),
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                Text(
-                  FormatUtils.formatAmountInt(minAmount),
-                  style: TextStyle(
-                    fontSize: 12.sp,
-                    color: Colors.grey[600],
-                  ),
-                ),
-                Column(
-                  children: [
-                    Container(
-                      padding:
-                          EdgeInsets.symmetric(horizontal: 8.w, vertical: 4.h),
-                      decoration: BoxDecoration(
-                        color: isFilterActive
-                            ? Theme.of(context).primaryColor.withOpacity(0.2)
-                            : Colors.grey[200],
-                        borderRadius: BorderRadius.circular(12.r),
-                        border: isFilterActive
-                            ? Border.all(
-                                color: Theme.of(context).primaryColor, width: 1)
-                            : null,
-                      ),
-                      child: Text(
-                        '${FormatUtils.formatAmountInt(currentValue)}+',
-                        style: TextStyle(
-                          fontSize: 12.sp,
-                          fontWeight: FontWeight.w600,
-                          color: isFilterActive
-                              ? Theme.of(context).primaryColor
-                              : Colors.grey[700],
-                        ),
-                      ),
-                    ),
-                    SizedBox(height: 2.h),
-                    Text(
-                      '${state.filteredFunds.length} fondos',
-                      style: TextStyle(
-                        fontSize: 10.sp,
-                        color: isFilterActive
-                            ? Theme.of(context).primaryColor
-                            : Colors.grey[600],
-                        fontWeight: isFilterActive
-                            ? FontWeight.w600
-                            : FontWeight.normal,
-                      ),
-                    ),
-                  ],
-                ),
-                Text(
-                  FormatUtils.formatAmountInt(maxAmount),
-                  style: TextStyle(
-                    fontSize: 12.sp,
-                    color: Colors.grey[600],
-                  ),
-                ),
-              ],
+            Expanded(
+              child: _buildSummaryItem(
+                'FIC',
+                state.summary.ficCount.toString(),
+                Icons.trending_up,
+              ),
             ),
-          ),
-        ],
+            Expanded(
+              child: _buildSummaryItem(
+                'Total Min.',
+                FormatUtils.formatCurrency(state.summary.totalMinAmount),
+                Icons.attach_money,
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }
 
-  Widget _buildSortingDropdown(BuildContext context, FundsLoaded state) {
-    return DropdownButtonFormField<String>(
-      value: state.sortBy,
-      decoration: InputDecoration(
-        labelText: 'Ordenar por',
-        border: const OutlineInputBorder(),
-        contentPadding: EdgeInsets.symmetric(horizontal: 12.w, vertical: 8.h),
-        suffixIcon: Icon(
-          state.sortAscending ? Icons.arrow_upward : Icons.arrow_downward,
-          size: 16.sp,
-        ),
-      ),
-      items: [
-        DropdownMenuItem<String>(
-          value: 'name',
-          child: Row(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              const Text('Nombre'),
-              if (state.sortBy == 'name') ...[
-                SizedBox(width: 8.w),
-                Icon(
-                  state.sortAscending
-                      ? Icons.arrow_upward
-                      : Icons.arrow_downward,
-                  size: 14.sp,
-                ),
-              ],
-            ],
+  Widget _buildSummaryItem(String label, String value, IconData icon) {
+    return Column(
+      children: [
+        Icon(icon, size: 24.sp, color: Colors.blue),
+        SizedBox(height: 8.h),
+        Text(
+          value,
+          style: TextStyle(
+            fontSize: 18.sp,
+            fontWeight: FontWeight.bold,
           ),
         ),
-        DropdownMenuItem<String>(
-          value: 'minAmount',
-          child: Row(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              const Text('Monto Mínimo'),
-              if (state.sortBy == 'minAmount') ...[
-                SizedBox(width: 8.w),
-                Icon(
-                  state.sortAscending
-                      ? Icons.arrow_upward
-                      : Icons.arrow_downward,
-                  size: 14.sp,
-                ),
-              ],
-            ],
+        Text(
+          label,
+          style: TextStyle(
+            fontSize: 12.sp,
+            color: Colors.grey[600],
           ),
-        ),
-        DropdownMenuItem<String>(
-          value: 'risk',
-          child: Row(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              const Text('Riesgo'),
-              if (state.sortBy == 'risk') ...[
-                SizedBox(width: 8.w),
-                Icon(
-                  state.sortAscending
-                      ? Icons.arrow_upward
-                      : Icons.arrow_downward,
-                  size: 14.sp,
-                ),
-              ],
-            ],
-          ),
+          textAlign: TextAlign.center,
         ),
       ],
-      onChanged: (value) {
-        if (value != null) {
-          context.read<FundsBloc>().add(FundsSortBy(
-                sortBy: value,
-                ascending: state.sortBy == value ? !state.sortAscending : true,
-              ));
-        }
-      },
+    );
+  }
+
+  void _showSubscriptionDialog(BuildContext context, Fund fund) {
+    final amountController = TextEditingController();
+    
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: Text('Suscribirse a ${fund.name}'),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Text('Monto mínimo: \$${fund.minAmount.toStringAsFixed(0)}'),
+            SizedBox(height: 16.h),
+            TextField(
+              controller: amountController,
+              keyboardType: TextInputType.number,
+              decoration: const InputDecoration(
+                labelText: 'Monto a invertir',
+                prefixText: '\$',
+              ),
+            ),
+          ],
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(),
+            child: const Text('Cancelar'),
+          ),
+          ElevatedButton(
+            onPressed: () {
+              final amount = double.tryParse(amountController.text);
+              if (amount != null && amount >= fund.minAmount) {
+                context.read<AppBloc>().add(AppSubscribeToFund(
+                  fund: fund,
+                  amount: amount,
+                ));
+                Navigator.of(context).pop();
+              }
+            },
+            child: const Text('Suscribirse'),
+          ),
+        ],
+      ),
     );
   }
 }

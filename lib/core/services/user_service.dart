@@ -2,9 +2,9 @@ import 'package:fund_manager/features/funds/domain/models/user.dart';
 import 'package:fund_manager/features/funds/domain/models/user_fund.dart';
 import 'package:fund_manager/features/funds/domain/models/transaction.dart';
 import 'package:fund_manager/features/funds/domain/models/fund.dart';
-import 'package:fund_manager/features/funds/domain/services/notification_service.dart';
+import 'package:fund_manager/core/services/notification_service.dart';
 
-abstract class UserFundsService {
+abstract class UserService {
   Future<User> getCurrentUser();
   Future<List<UserFund>> getUserFunds();
   Future<List<Transaction>> getTransactionHistory();
@@ -20,7 +20,7 @@ abstract class UserFundsService {
   });
 }
 
-class MockUserFundsService implements UserFundsService {
+class MockUserService implements UserService {
   final NotificationService _notificationService;
 
   // Datos mock del usuario
@@ -38,7 +38,7 @@ class MockUserFundsService implements UserFundsService {
   // Historial de transacciones
   final List<Transaction> _transactions = [];
 
-  MockUserFundsService(this._notificationService);
+  MockUserService(this._notificationService);
 
   @override
   Future<User> getCurrentUser() async {
@@ -47,7 +47,6 @@ class MockUserFundsService implements UserFundsService {
       await Future.delayed(const Duration(milliseconds: 200));
       return _currentUser;
     } catch (e) {
-      // Si hay un error, devolver el usuario actual en lugar de propagar la excepción
       print('Error al obtener usuario actual: $e');
       return _currentUser;
     }
@@ -60,7 +59,6 @@ class MockUserFundsService implements UserFundsService {
       await Future.delayed(const Duration(milliseconds: 300));
       return _userFunds.where((fund) => fund.isActive).toList();
     } catch (e) {
-      // Si hay un error, devolver lista vacía en lugar de propagar la excepción
       print('Error al obtener fondos del usuario: $e');
       return [];
     }
@@ -73,7 +71,6 @@ class MockUserFundsService implements UserFundsService {
       await Future.delayed(const Duration(milliseconds: 250));
       return _transactions.reversed.toList(); // Más recientes primero
     } catch (e) {
-      // Si hay un error, devolver lista vacía en lugar de propagar la excepción
       print('Error al obtener historial de transacciones: $e');
       return [];
     }
@@ -151,13 +148,12 @@ class MockUserFundsService implements UserFundsService {
         );
       } catch (notificationError) {
         print('Error al enviar notificación: $notificationError');
-        // No fallar la suscripción si la notificación falla
       }
 
       return true;
     } catch (e) {
       print('Error en subscribeToFund: $e');
-      rethrow; // Re-lanzar la excepción para que el BLoC la maneje
+      rethrow;
     }
   }
 
@@ -202,13 +198,12 @@ class MockUserFundsService implements UserFundsService {
         );
       } catch (notificationError) {
         print('Error al enviar notificación: $notificationError');
-        // No fallar la cancelación si la notificación falla
       }
 
       return true;
     } catch (e) {
       print('Error en cancelFund: $e');
-      rethrow; // Re-lanzar la excepción para que el BLoC la maneje
+      rethrow;
     }
   }
 
@@ -227,7 +222,7 @@ class MockUserFundsService implements UserFundsService {
       return true;
     } catch (e) {
       print('Error al actualizar preferencias de notificación: $e');
-      return false; // Devolver false en lugar de propagar la excepción
+      return false;
     }
   }
 }

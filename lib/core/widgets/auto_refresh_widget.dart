@@ -41,7 +41,7 @@ class _AutoRefreshWidgetState extends State<AutoRefreshWidget> {
     _timer = Timer.periodic(widget.refreshInterval, (timer) {
       if (mounted) {
         // Actualizar datos del AppBloc
-        context.read<AppBloc>().add(const AppLoadUserData());
+        context.read<AppBloc>().add(const AppRefreshData());
         
         // Actualizar datos del FundsBloc si está disponible
         try {

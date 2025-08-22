@@ -1,11 +1,11 @@
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:equatable/equatable.dart';
+import 'package:fund_manager/core/services/user_service.dart';
 
 import 'package:fund_manager/features/funds/domain/models/fund.dart';
 import 'package:fund_manager/features/funds/domain/models/user.dart';
 import 'package:fund_manager/features/funds/domain/models/user_fund.dart';
 import 'package:fund_manager/features/funds/domain/models/transaction.dart';
-import 'package:fund_manager/features/funds/domain/services/user_funds_service.dart';
 
 // Eventos
 abstract class FundsEvent extends Equatable {
@@ -67,48 +67,7 @@ class FundsSortBy extends FundsEvent {
   List<Object?> get props => [sortBy, ascending];
 }
 
-class FundsSubscribeToFund extends FundsEvent {
-  final Fund fund;
-  final double amount;
 
-  const FundsSubscribeToFund({
-    required this.fund,
-    required this.amount,
-  });
-
-  @override
-  List<Object?> get props => [fund, amount];
-}
-
-class FundsCancelFund extends FundsEvent {
-  final UserFund userFund;
-
-  const FundsCancelFund(this.userFund);
-
-  @override
-  List<Object?> get props => [userFund];
-}
-
-class FundsLoadUserData extends FundsEvent {
-  const FundsLoadUserData();
-}
-
-class FundsLoadUserFunds extends FundsEvent {
-  const FundsLoadUserFunds();
-}
-
-class FundsLoadTransactionHistory extends FundsEvent {
-  const FundsLoadTransactionHistory();
-}
-
-class FundsUpdateNotificationPreference extends FundsEvent {
-  final NotificationPreference preference;
-
-  const FundsUpdateNotificationPreference(this.preference);
-
-  @override
-  List<Object?> get props => [preference];
-}
 
 class FundsSyncWithAppBloc extends FundsEvent {
   final User? currentUser;
@@ -150,7 +109,7 @@ class FundsLoaded extends FundsState {
   final bool sortAscending;
   final User? currentUser;
   final List<UserFund> userFunds;
-  final List<Transaction> transactionHistory;
+  final List<Transaction> transactions;
   final bool isLoading;
   final String? errorMessage;
 
@@ -163,25 +122,10 @@ class FundsLoaded extends FundsState {
     this.sortAscending = true,
     this.currentUser,
     this.userFunds = const [],
-    this.transactionHistory = const [],
+    this.transactions = const [],
     this.isLoading = false,
     this.errorMessage,
   });
-
-  @override
-  List<Object?> get props => [
-        allFunds,
-        filteredFunds,
-        summary,
-        filters,
-        sortBy,
-        sortAscending,
-        currentUser,
-        userFunds,
-        transactionHistory,
-        isLoading,
-        errorMessage,
-      ];
 
   FundsLoaded copyWith({
     List<Fund>? allFunds,
@@ -192,7 +136,7 @@ class FundsLoaded extends FundsState {
     bool? sortAscending,
     User? currentUser,
     List<UserFund>? userFunds,
-    List<Transaction>? transactionHistory,
+    List<Transaction>? transactions,
     bool? isLoading,
     String? errorMessage,
   }) {
@@ -205,47 +149,38 @@ class FundsLoaded extends FundsState {
       sortAscending: sortAscending ?? this.sortAscending,
       currentUser: currentUser ?? this.currentUser,
       userFunds: userFunds ?? this.userFunds,
-      transactionHistory: transactionHistory ?? this.transactionHistory,
+      transactions: transactions ?? this.transactions,
       isLoading: isLoading ?? this.isLoading,
       errorMessage: errorMessage,
     );
   }
+
+  @override
+  List<Object?> get props => [
+        allFunds,
+        filteredFunds,
+        summary,
+        filters,
+        sortBy,
+        sortAscending,
+        currentUser,
+        userFunds,
+        transactions,
+        isLoading,
+        errorMessage,
+      ];
 }
 
 class FundsError extends FundsState {
   final String message;
 
-  const FundsError(this.message);
+  const FundsError({required this.message});
 
   @override
   List<Object?> get props => [message];
 }
 
-class FundsSummary extends Equatable {
-  final int totalFunds;
-  final int uniqueCategories;
-  final int fpvCount;
-  final int ficCount;
-  final int averageMinAmount;
-
-  const FundsSummary({
-    required this.totalFunds,
-    required this.uniqueCategories,
-    required this.fpvCount,
-    required this.ficCount,
-    required this.averageMinAmount,
-  });
-
-  @override
-  List<Object?> get props => [
-        totalFunds,
-        uniqueCategories,
-        fpvCount,
-        ficCount,
-        averageMinAmount,
-      ];
-}
-
+// Modelos auxiliares
 class FundsFilters extends Equatable {
   final String? category;
   final String? risk;
@@ -256,9 +191,6 @@ class FundsFilters extends Equatable {
     this.risk,
     this.minAmount,
   });
-
-  @override
-  List<Object?> get props => [category, risk, minAmount];
 
   FundsFilters copyWith({
     String? category,
@@ -272,14 +204,32 @@ class FundsFilters extends Equatable {
     );
   }
 
-  bool get hasFilters => category != null || risk != null || minAmount != null;
+  @override
+  List<Object?> get props => [category, risk, minAmount];
+}
+
+class FundsSummary extends Equatable {
+  final int totalFunds;
+  final int fpvCount;
+  final int ficCount;
+  final double totalMinAmount;
+
+  const FundsSummary({
+    required this.totalFunds,
+    required this.fpvCount,
+    required this.ficCount,
+    required this.totalMinAmount,
+  });
+
+  @override
+  List<Object?> get props => [totalFunds, fpvCount, ficCount, totalMinAmount];
 }
 
 // BLoC
 class FundsBloc extends Bloc<FundsEvent, FundsState> {
-  final UserFundsService _userFundsService;
+  final UserService _userService;
 
-  FundsBloc(this._userFundsService) : super(const FundsInitial()) {
+  FundsBloc(this._userService) : super(const FundsInitial()) {
     on<FundsStarted>(_onFundsStarted);
     on<FundsRefresh>(_onFundsRefresh);
     on<FundsFilterByCategory>(_onFilterByCategory);
@@ -287,12 +237,6 @@ class FundsBloc extends Bloc<FundsEvent, FundsState> {
     on<FundsFilterByMinAmount>(_onFilterByMinAmount);
     on<FundsClearFilters>(_onClearFilters);
     on<FundsSortBy>(_onSortBy);
-    on<FundsSubscribeToFund>(_onSubscribeToFund);
-    on<FundsCancelFund>(_onCancelFund);
-    on<FundsLoadUserData>(_onLoadUserData);
-    on<FundsLoadUserFunds>(_onLoadUserFunds);
-    on<FundsLoadTransactionHistory>(_onLoadTransactionHistory);
-    on<FundsUpdateNotificationPreference>(_onUpdateNotificationPreference);
     on<FundsSyncWithAppBloc>(_onSyncWithAppBloc);
   }
 
@@ -309,15 +253,12 @@ class FundsBloc extends Bloc<FundsEvent, FundsState> {
     _loadFundsData(emit);
   }
 
-  void _onFilterByCategory(
-      FundsFilterByCategory event, Emitter<FundsState> emit) {
+  void _onFilterByCategory(FundsFilterByCategory event, Emitter<FundsState> emit) {
     if (state is FundsLoaded) {
       final currentState = state as FundsLoaded;
-      final newFilters =
-          currentState.filters.copyWith(category: event.category);
+      final newFilters = currentState.filters.copyWith(category: event.category);
       final filteredFunds = _applyFilters(currentState.allFunds, newFilters);
-      final sortedFunds = _sortFunds(
-          filteredFunds, currentState.sortBy, currentState.sortAscending);
+      final sortedFunds = _sortFunds(filteredFunds, currentState.sortBy, currentState.sortAscending);
 
       emit(currentState.copyWith(
         filteredFunds: sortedFunds,
@@ -331,8 +272,7 @@ class FundsBloc extends Bloc<FundsEvent, FundsState> {
       final currentState = state as FundsLoaded;
       final newFilters = currentState.filters.copyWith(risk: event.risk);
       final filteredFunds = _applyFilters(currentState.allFunds, newFilters);
-      final sortedFunds = _sortFunds(
-          filteredFunds, currentState.sortBy, currentState.sortAscending);
+      final sortedFunds = _sortFunds(filteredFunds, currentState.sortBy, currentState.sortAscending);
 
       emit(currentState.copyWith(
         filteredFunds: sortedFunds,
@@ -341,15 +281,12 @@ class FundsBloc extends Bloc<FundsEvent, FundsState> {
     }
   }
 
-  void _onFilterByMinAmount(
-      FundsFilterByMinAmount event, Emitter<FundsState> emit) {
+  void _onFilterByMinAmount(FundsFilterByMinAmount event, Emitter<FundsState> emit) {
     if (state is FundsLoaded) {
       final currentState = state as FundsLoaded;
-      final newFilters =
-          currentState.filters.copyWith(minAmount: event.minAmount);
+      final newFilters = currentState.filters.copyWith(minAmount: event.minAmount);
       final filteredFunds = _applyFilters(currentState.allFunds, newFilters);
-      final sortedFunds = _sortFunds(
-          filteredFunds, currentState.sortBy, currentState.sortAscending);
+      final sortedFunds = _sortFunds(filteredFunds, currentState.sortBy, currentState.sortAscending);
 
       emit(currentState.copyWith(
         filteredFunds: sortedFunds,
@@ -361,9 +298,8 @@ class FundsBloc extends Bloc<FundsEvent, FundsState> {
   void _onClearFilters(FundsClearFilters event, Emitter<FundsState> emit) {
     if (state is FundsLoaded) {
       final currentState = state as FundsLoaded;
-      final newFilters = const FundsFilters();
-      final sortedFunds = _sortFunds(currentState.allFunds, currentState.sortBy,
-          currentState.sortAscending);
+      const newFilters = FundsFilters();
+      final sortedFunds = _sortFunds(currentState.allFunds, currentState.sortBy, currentState.sortAscending);
 
       emit(currentState.copyWith(
         filteredFunds: sortedFunds,
@@ -375,8 +311,7 @@ class FundsBloc extends Bloc<FundsEvent, FundsState> {
   void _onSortBy(FundsSortBy event, Emitter<FundsState> emit) {
     if (state is FundsLoaded) {
       final currentState = state as FundsLoaded;
-      final sortedFunds =
-          _sortFunds(currentState.filteredFunds, event.sortBy, event.ascending);
+      final sortedFunds = _sortFunds(currentState.filteredFunds, event.sortBy, event.ascending);
 
       emit(currentState.copyWith(
         filteredFunds: sortedFunds,
@@ -386,251 +321,24 @@ class FundsBloc extends Bloc<FundsEvent, FundsState> {
     }
   }
 
-  void _onSubscribeToFund(
-      FundsSubscribeToFund event, Emitter<FundsState> emit) async {
-    if (state is FundsLoaded) {
-      final currentState = state as FundsLoaded;
-      emit(currentState.copyWith(isLoading: true, errorMessage: null));
 
-      try {
-        final success = await _userFundsService.subscribeToFund(
-          fund: event.fund,
-          amount: event.amount,
-        );
-
-        if (success) {
-          // Recargar datos del usuario
-          final user = await _userFundsService.getCurrentUser();
-          final userFunds = await _userFundsService.getUserFunds();
-          final transactions = await _userFundsService.getTransactionHistory();
-
-          emit(currentState.copyWith(
-            currentUser: user,
-            userFunds: userFunds,
-            transactionHistory: transactions,
-            isLoading: false,
-            errorMessage: null, // Limpiar cualquier error previo
-          ));
-        } else {
-          emit(currentState.copyWith(
-            isLoading: false,
-            errorMessage:
-                'No se pudo completar la suscripción. Verifica tu saldo.',
-          ));
-        }
-      } catch (e) {
-        emit(currentState.copyWith(
-          isLoading: false,
-          errorMessage: e.toString(),
-        ));
-
-        // Limpiar el error después de un tiempo
-        Future.delayed(const Duration(seconds: 5), () {
-          if (state is FundsLoaded) {
-            final currentState = state as FundsLoaded;
-            emit(currentState.copyWith(errorMessage: null));
-          }
-        });
-      }
-    }
-  }
-
-  void _onCancelFund(FundsCancelFund event, Emitter<FundsState> emit) async {
-    if (state is FundsLoaded) {
-      final currentState = state as FundsLoaded;
-      emit(currentState.copyWith(isLoading: true, errorMessage: null));
-
-      try {
-        final success =
-            await _userFundsService.cancelFund(userFund: event.userFund);
-
-        if (success) {
-          // Recargar datos del usuario
-          final user = await _userFundsService.getCurrentUser();
-          final userFunds = await _userFundsService.getUserFunds();
-          final transactions = await _userFundsService.getTransactionHistory();
-
-          emit(currentState.copyWith(
-            currentUser: user,
-            userFunds: userFunds,
-            transactionHistory: transactions,
-            isLoading: false,
-            errorMessage: null, // Limpiar cualquier error previo
-          ));
-        } else {
-          emit(currentState.copyWith(
-            isLoading: false,
-            errorMessage: 'No se pudo completar la cancelación.',
-          ));
-        }
-      } catch (e) {
-        emit(currentState.copyWith(
-          isLoading: false,
-          errorMessage: e.toString(),
-        ));
-
-        // Limpiar el error después de un tiempo
-        Future.delayed(const Duration(seconds: 5), () {
-          if (state is FundsLoaded) {
-            final currentState = state as FundsLoaded;
-            emit(currentState.copyWith(errorMessage: null));
-          }
-        });
-      }
-    }
-  }
-
-  void _onLoadUserData(
-      FundsLoadUserData event, Emitter<FundsState> emit) async {
-    if (state is FundsLoaded) {
-      final currentState = state as FundsLoaded;
-      emit(currentState.copyWith(isLoading: true));
-
-      try {
-        final user = await _userFundsService.getCurrentUser();
-        emit(currentState.copyWith(
-          currentUser: user,
-          isLoading: false,
-        ));
-      } catch (e) {
-        emit(currentState.copyWith(
-          isLoading: false,
-          errorMessage: e.toString(),
-        ));
-      }
-    } else {
-      // Si no hay estado cargado, cargar los fondos primero
-      _loadFundsData(emit);
-      final currentState = state as FundsLoaded;
-      emit(currentState.copyWith(isLoading: true));
-
-      try {
-        final user = await _userFundsService.getCurrentUser();
-        emit(currentState.copyWith(
-          currentUser: user,
-          isLoading: false,
-        ));
-      } catch (e) {
-        emit(currentState.copyWith(
-          isLoading: false,
-          errorMessage: e.toString(),
-        ));
-      }
-    }
-  }
-
-  void _onLoadUserFunds(
-      FundsLoadUserFunds event, Emitter<FundsState> emit) async {
-    if (state is FundsLoaded) {
-      final currentState = state as FundsLoaded;
-      emit(currentState.copyWith(isLoading: true));
-
-      try {
-        final userFunds = await _userFundsService.getUserFunds();
-        emit(currentState.copyWith(
-          userFunds: userFunds,
-          isLoading: false,
-        ));
-      } catch (e) {
-        emit(currentState.copyWith(
-          isLoading: false,
-          errorMessage: e.toString(),
-        ));
-      }
-    } else {
-      // Si no hay estado cargado, cargar los fondos primero
-      _loadFundsData(emit);
-      final currentState = state as FundsLoaded;
-      emit(currentState.copyWith(isLoading: true));
-
-      try {
-        final userFunds = await _userFundsService.getUserFunds();
-        emit(currentState.copyWith(
-          userFunds: userFunds,
-          isLoading: false,
-        ));
-      } catch (e) {
-        emit(currentState.copyWith(
-          isLoading: false,
-          errorMessage: e.toString(),
-        ));
-      }
-    }
-  }
-
-  void _onLoadTransactionHistory(
-      FundsLoadTransactionHistory event, Emitter<FundsState> emit) async {
-    if (state is FundsLoaded) {
-      final currentState = state as FundsLoaded;
-      emit(currentState.copyWith(isLoading: true));
-
-      try {
-        final transactions = await _userFundsService.getTransactionHistory();
-        emit(currentState.copyWith(
-          transactionHistory: transactions,
-          isLoading: false,
-        ));
-      } catch (e) {
-        emit(currentState.copyWith(
-          isLoading: false,
-          errorMessage: e.toString(),
-        ));
-      }
-    } else {
-      // Si no hay estado cargado, cargar los fondos primero
-      _loadFundsData(emit);
-      final currentState = state as FundsLoaded;
-      emit(currentState.copyWith(isLoading: true));
-
-      try {
-        final transactions = await _userFundsService.getTransactionHistory();
-        emit(currentState.copyWith(
-          transactionHistory: transactions,
-          isLoading: false,
-        ));
-      } catch (e) {
-        emit(currentState.copyWith(
-          isLoading: false,
-          errorMessage: e.toString(),
-        ));
-      }
-    }
-  }
-
-  void _onUpdateNotificationPreference(
-      FundsUpdateNotificationPreference event, Emitter<FundsState> emit) async {
-    if (state is FundsLoaded) {
-      final currentState = state as FundsLoaded;
-      emit(currentState.copyWith(isLoading: true));
-
-      try {
-        final success = await _userFundsService.updateNotificationPreference(
-          preference: event.preference,
-        );
-
-        if (success) {
-          final user = await _userFundsService.getCurrentUser();
-          emit(currentState.copyWith(
-            currentUser: user,
-            isLoading: false,
-          ));
-        }
-      } catch (e) {
-        emit(currentState.copyWith(
-          isLoading: false,
-          errorMessage: e.toString(),
-        ));
-      }
-    }
-  }
 
   void _onSyncWithAppBloc(FundsSyncWithAppBloc event, Emitter<FundsState> emit) {
     if (state is FundsLoaded) {
       final currentState = state as FundsLoaded;
       emit(currentState.copyWith(
-        currentUser: event.currentUser ?? currentState.currentUser,
+        currentUser: event.currentUser,
         userFunds: event.userFunds,
-        transactionHistory: event.transactions,
+        transactions: event.transactions,
+      ));
+    } else {
+      // Si no hay estado cargado, cargar los fondos primero
+      _loadFundsData(emit);
+      final currentState = state as FundsLoaded;
+      emit(currentState.copyWith(
+        currentUser: event.currentUser,
+        userFunds: event.userFunds,
+        transactions: event.transactions,
       ));
     }
   }
@@ -708,20 +416,15 @@ class FundsBloc extends Bloc<FundsEvent, FundsState> {
   }
 
   FundsSummary _calculateSummary(List<Fund> funds) {
-    final uniqueCategories = funds.map((f) => f.category).toSet().length;
-    final fpvCount = funds.where((f) => f.category == 'FPV').length;
-    final ficCount = funds.where((f) => f.category == 'FIC').length;
-    final averageMinAmount = funds.isEmpty
-        ? 0
-        : funds.fold<int>(0, (sum, fund) => sum + fund.minAmount) ~/
-            funds.length;
+    final fpvCount = funds.where((fund) => fund.category == 'FPV').length;
+    final ficCount = funds.where((fund) => fund.category == 'FIC').length;
+    final totalMinAmount = funds.fold<double>(0, (sum, fund) => sum + fund.minAmount);
 
     return FundsSummary(
       totalFunds: funds.length,
-      uniqueCategories: uniqueCategories,
       fpvCount: fpvCount,
       ficCount: ficCount,
-      averageMinAmount: averageMinAmount,
+      totalMinAmount: totalMinAmount,
     );
   }
 
@@ -742,26 +445,30 @@ class FundsBloc extends Bloc<FundsEvent, FundsState> {
 
   List<Fund> _sortFunds(List<Fund> funds, String sortBy, bool ascending) {
     final sortedFunds = List<Fund>.from(funds);
-
+    
     switch (sortBy) {
       case 'name':
-        sortedFunds.sort((a, b) =>
-            ascending ? a.name.compareTo(b.name) : b.name.compareTo(a.name));
+        sortedFunds.sort((a, b) => ascending 
+          ? a.name.compareTo(b.name)
+          : b.name.compareTo(a.name));
         break;
       case 'minAmount':
-        sortedFunds.sort((a, b) => ascending
-            ? a.minAmount.compareTo(b.minAmount)
-            : b.minAmount.compareTo(a.minAmount));
+        sortedFunds.sort((a, b) => ascending 
+          ? a.minAmount.compareTo(b.minAmount)
+          : b.minAmount.compareTo(a.minAmount));
         break;
       case 'risk':
-        sortedFunds.sort((a, b) =>
-            ascending ? a.risk.compareTo(b.risk) : b.risk.compareTo(a.risk));
+        sortedFunds.sort((a, b) => ascending 
+          ? a.risk.compareTo(b.risk)
+          : b.risk.compareTo(a.risk));
         break;
-      default:
-        // Por defecto ordenar por nombre
-        sortedFunds.sort((a, b) => a.name.compareTo(b.name));
+      case 'category':
+        sortedFunds.sort((a, b) => ascending 
+          ? a.category.compareTo(b.category)
+          : b.category.compareTo(a.category));
+        break;
     }
-
+    
     return sortedFunds;
   }
 }
