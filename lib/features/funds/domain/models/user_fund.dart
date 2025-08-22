@@ -9,6 +9,7 @@ class UserFund extends Equatable {
   final DateTime subscriptionDate;
   final double currentValue;
   final double performance;
+  final double fixedPerformance; // Rendimiento fijo al momento de suscripción
   final bool isActive;
 
   const UserFund({
@@ -20,6 +21,7 @@ class UserFund extends Equatable {
     required this.subscriptionDate,
     required this.currentValue,
     required this.performance,
+    required this.fixedPerformance,
     required this.isActive,
   });
 
@@ -33,6 +35,7 @@ class UserFund extends Equatable {
         subscriptionDate,
         currentValue,
         performance,
+        fixedPerformance,
         isActive,
       ];
 
@@ -45,6 +48,7 @@ class UserFund extends Equatable {
     DateTime? subscriptionDate,
     double? currentValue,
     double? performance,
+    double? fixedPerformance,
     bool? isActive,
   }) {
     return UserFund(
@@ -56,7 +60,24 @@ class UserFund extends Equatable {
       subscriptionDate: subscriptionDate ?? this.subscriptionDate,
       currentValue: currentValue ?? this.currentValue,
       performance: performance ?? this.performance,
+      fixedPerformance: fixedPerformance ?? this.fixedPerformance,
       isActive: isActive ?? this.isActive,
     );
+  }
+
+  /// Obtiene el valor actual (usando el campo currentValue que se actualiza desde el servicio)
+  double getCalculatedCurrentValue() {
+    return currentValue;
+  }
+
+  /// Calcula las ganancias totales
+  double getTotalGains() {
+    return currentValue - investedAmount;
+  }
+
+  /// Calcula el rendimiento actual (porcentaje de ganancia)
+  double getCurrentPerformance() {
+    if (investedAmount == 0) return 0;
+    return ((currentValue - investedAmount) / investedAmount) * 100;
   }
 }

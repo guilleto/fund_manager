@@ -11,18 +11,13 @@ import 'package:fund_manager/core/widgets/app_scaffold.dart';
 import 'package:fund_manager/core/utils/format_utils.dart';
 import 'package:fund_manager/core/blocs/app_bloc.dart';
 import 'package:fund_manager/features/funds/presentation/blocs/funds_bloc.dart';
-import 'package:fund_manager/features/funds/domain/models/fund.dart';
-import 'package:fund_manager/core/services/user_service.dart';
 
 class FundsPage extends StatelessWidget {
   const FundsPage({super.key});
 
   @override
   Widget build(BuildContext context) {
-    return BlocProvider(
-      create: (context) => FundsBloc(context.read<UserService>())..add(const FundsStarted()),
-      child: const FundsView(),
-    );
+    return const FundsView();
   }
 }
 
@@ -80,6 +75,29 @@ class FundsView extends StatelessWidget {
                   child: AppScaffold(
                     title: 'Fondos Disponibles',
                     actions: [
+                      Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Container(
+                            width: 8.w,
+                            height: 8.h,
+                            decoration: BoxDecoration(
+                              color: Colors.green[400],
+                              shape: BoxShape.circle,
+                            ),
+                          ),
+                          SizedBox(width: 4.w),
+                                                   Text(
+                           'Fondos por minuto',
+                           style: TextStyle(
+                             fontSize: 12.sp,
+                             color: Colors.green[600],
+                             fontWeight: FontWeight.w500,
+                           ),
+                         ),
+                          SizedBox(width: 8.w),
+                        ],
+                      ),
                       IconButton(
                         icon: const Icon(Icons.refresh),
                         onPressed: () {

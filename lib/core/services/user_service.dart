@@ -3,6 +3,7 @@ import 'package:fund_manager/features/funds/domain/models/user_fund.dart';
 import 'package:fund_manager/features/funds/domain/models/transaction.dart';
 import 'package:fund_manager/features/funds/domain/models/fund.dart';
 import 'package:fund_manager/core/services/notification_service.dart';
+import 'dart:math';
 
 abstract class UserService {
   Future<User> getCurrentUser();
@@ -57,7 +58,26 @@ class MockUserService implements UserService {
     try {
       // Simular delay de red
       await Future.delayed(const Duration(milliseconds: 300));
-      return _userFunds.where((fund) => fund.isActive).toList();
+      
+      print('DEBUG: Obteniendo fondos del usuario - Total: ${_userFunds.length}');
+      
+      // Actualizar los valores de las suscripciones activas
+      for (int i = 0; i < _userFunds.length; i++) {
+        if (_userFunds[i].isActive) {
+          final oldValue = _userFunds[i].currentValue;
+          _userFunds[i] = _updateUserFundValue(_userFunds[i]);
+          final newValue = _userFunds[i].currentValue;
+          
+          if (oldValue != newValue) {
+            print('DEBUG: Valor actualizado para ${_userFunds[i].fundName}: \$${oldValue} -> \$${newValue}');
+          }
+        }
+      }
+      
+      final activeFunds = _userFunds.where((fund) => fund.isActive).toList();
+      print('DEBUG: Fondos activos retornados: ${activeFunds.length}');
+      
+      return activeFunds;
     } catch (e) {
       print('Error al obtener fondos del usuario: $e');
       return [];
@@ -124,7 +144,7 @@ class MockUserService implements UserService {
         balance: _currentUser.balance - amount,
       );
 
-      // Agregar fondo a la lista del usuario
+      // Agregar fondo a la lista del usuario con rendimiento fijo
       final userFund = UserFund(
         id: DateTime.now().millisecondsSinceEpoch.toString(),
         fundId: fund.id.toString(),
@@ -134,8 +154,14 @@ class MockUserService implements UserService {
         subscriptionDate: DateTime.now(),
         currentValue: amount, // Inicialmente igual al monto invertido
         performance: 0.0, // Sin rendimiento inicial
+        fixedPerformance: fund.performance, // Rendimiento fijo al momento de suscripción
         isActive: true,
       );
+      
+      print('DEBUG: Suscribiendo a fondo ${fund.name}');
+      print('DEBUG: Monto invertido: \$${amount}');
+      print('DEBUG: Rendimiento fijo guardado: ${fund.performance}% por minuto');
+      print('DEBUG: Fecha de suscripción: ${DateTime.now()}');
 
       _userFunds.add(userFund);
       _transactions.add(transaction);
@@ -165,21 +191,32 @@ class MockUserService implements UserService {
       // Simular procesamiento
       await Future.delayed(const Duration(milliseconds: 800));
 
+      // Calcular el valor actual basado en el rendimiento fijo y tiempo transcurrido
+      final updatedUserFund = _updateUserFundValue(userFund);
+      final calculatedValue = updatedUserFund.currentValue;
+      final gains = calculatedValue - userFund.investedAmount;
+      
+      print('DEBUG: Cancelando fondo ${userFund.fundName}');
+      print('DEBUG: Valor invertido: \$${userFund.investedAmount}');
+      print('DEBUG: Valor calculado: \$${calculatedValue}');
+      print('DEBUG: Ganancias: \$${gains}');
+      print('DEBUG: Rendimiento fijo: ${userFund.fixedPerformance}% por minuto');
+      
       // Crear transacción de cancelación
       final transaction = Transaction(
         id: DateTime.now().millisecondsSinceEpoch.toString(),
         fundId: userFund.fundId,
         fundName: userFund.fundName,
         type: TransactionType.cancellation,
-        amount: userFund.currentValue,
+        amount: calculatedValue,
         date: DateTime.now(),
         status: TransactionStatus.completed,
-        description: 'Cancelación del fondo ${userFund.fundName}',
+        description: 'Cancelación del fondo ${userFund.fundName} - Ganancias: \$${gains.toStringAsFixed(2)}',
       );
 
-      // Actualizar saldo del usuario (devolver el valor actual)
+      // Actualizar saldo del usuario (devolver el valor calculado)
       _currentUser = _currentUser.copyWith(
-        balance: _currentUser.balance + userFund.currentValue,
+        balance: _currentUser.balance + calculatedValue,
       );
 
       // Marcar fondo como inactivo
@@ -224,5 +261,32 @@ class MockUserService implements UserService {
       print('Error al actualizar preferencias de notificación: $e');
       return false;
     }
+  }
+
+  /// Actualiza el valor actual de un UserFund basado en el rendimiento fijo y tiempo transcurrido
+  UserFund _updateUserFundValue(UserFund userFund) {
+    if (!userFund.isActive) return userFund;
+    
+    final now = DateTime.now();
+    final duration = now.difference(userFund.subscriptionDate);
+    final minutesElapsed = duration.inMinutes;
+    
+    // Si no han pasado minutos, retornar el valor invertido
+    if (minutesElapsed <= 0) return userFund;
+    
+    // El rendimiento fijo ya es por minuto
+    final performancePerMinute = userFund.fixedPerformance;
+    
+    // Calcular el valor actual con interés compuesto por minuto
+    final calculatedValue = userFund.investedAmount * pow(1 + performancePerMinute / 100, minutesElapsed);
+    
+    print('DEBUG: Actualizando UserFund ${userFund.fundName}');
+    print('DEBUG: Minutos transcurridos: $minutesElapsed');
+    print('DEBUG: Rendimiento por minuto: ${performancePerMinute}%');
+    print('DEBUG: Valor invertido: \$${userFund.investedAmount}');
+    print('DEBUG: Valor calculado: \$${calculatedValue}');
+    print('DEBUG: Ganancias: \$${calculatedValue - userFund.investedAmount}');
+    
+    return userFund.copyWith(currentValue: calculatedValue);
   }
 }

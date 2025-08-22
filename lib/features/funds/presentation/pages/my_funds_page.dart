@@ -4,7 +4,6 @@ import 'package:flutter_screenutil/flutter_screenutil.dart';
 
 import 'package:fund_manager/core/widgets/responsive_widget.dart';
 import 'package:fund_manager/core/widgets/custom_button.dart';
-import 'package:fund_manager/core/widgets/fund_card.dart';
 import 'package:fund_manager/core/widgets/loading_overlay.dart';
 import 'package:fund_manager/core/widgets/auto_refresh_widget.dart';
 import 'package:fund_manager/core/widgets/app_scaffold.dart';
@@ -40,6 +39,29 @@ class _MyFundsViewState extends State<MyFundsView> {
             child: AppScaffold(
               title: 'Mis Fondos',
               actions: [
+                Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Container(
+                      width: 8.w,
+                      height: 8.h,
+                      decoration: BoxDecoration(
+                        color: Colors.green[400],
+                        shape: BoxShape.circle,
+                      ),
+                    ),
+                    SizedBox(width: 4.w),
+                    Text(
+                      'Actualizado cada minuto',
+                      style: TextStyle(
+                        fontSize: 12.sp,
+                        color: Colors.green[600],
+                        fontWeight: FontWeight.w500,
+                      ),
+                    ),
+                    SizedBox(width: 8.w),
+                  ],
+                ),
                 IconButton(
                   icon: const Icon(Icons.refresh),
                   onPressed: () {
@@ -335,10 +357,31 @@ class _MyFundsViewState extends State<MyFundsView> {
                 ),
                 Expanded(
                   child: _buildFundStat(
-                    'Rendimiento',
-                    '${userFund.performance >= 0 ? '+' : ''}${userFund.performance.toStringAsFixed(2)}%',
+                    'Rendimiento Fijo',
+                    '${userFund.fixedPerformance.toStringAsFixed(2)}% por min',
                     Icons.trending_up,
-                    color: userFund.performance >= 0 ? Colors.green : Colors.red,
+                    color: Colors.orange,
+                  ),
+                ),
+                Expanded(
+                  child: _buildFundStat(
+                    'Rendimiento Actual',
+                    '${userFund.getCurrentPerformance() >= 0 ? '+' : ''}${userFund.getCurrentPerformance().toStringAsFixed(2)}%',
+                    Icons.analytics,
+                    color: userFund.getCurrentPerformance() >= 0 ? Colors.green : Colors.red,
+                  ),
+                ),
+              ],
+            ),
+            SizedBox(height: 8.h),
+            Row(
+              children: [
+                Expanded(
+                  child: _buildFundStat(
+                    'Ganancias',
+                    '${userFund.getTotalGains() >= 0 ? '+' : ''}${FormatUtils.formatCurrency(userFund.getTotalGains())}',
+                    Icons.monetization_on,
+                    color: userFund.getTotalGains() >= 0 ? Colors.green : Colors.red,
                   ),
                 ),
                 Expanded(
@@ -348,21 +391,18 @@ class _MyFundsViewState extends State<MyFundsView> {
                     Icons.calendar_today,
                   ),
                 ),
+                Expanded(
+                  child: _buildFundStat(
+                    'Tiempo',
+                    _getTimeElapsed(userFund.subscriptionDate),
+                    Icons.access_time,
+                  ),
+                ),
               ],
             ),
             SizedBox(height: 16.h),
             Row(
               children: [
-                Expanded(
-                  child: CustomButton(
-                    text: 'Ver Detalles',
-                    onPressed: () {
-                      // Navegar a detalles del fondo
-                    },
-                    type: ButtonType.outline,
-                  ),
-                ),
-                SizedBox(width: 12.w),
                 Expanded(
                   child: CustomButton(
                     text: 'Cancelar',
@@ -403,6 +443,19 @@ class _MyFundsViewState extends State<MyFundsView> {
         ),
       ],
     );
+  }
+
+  String _getTimeElapsed(DateTime subscriptionDate) {
+    final now = DateTime.now();
+    final duration = now.difference(subscriptionDate);
+    
+    if (duration.inDays > 0) {
+      return '${duration.inDays}d ${duration.inHours % 24}h';
+    } else if (duration.inHours > 0) {
+      return '${duration.inHours}h ${duration.inMinutes % 60}m';
+    } else {
+      return '${duration.inMinutes}m';
+    }
   }
 
   void _showCancelDialog(BuildContext context, UserFund userFund) {

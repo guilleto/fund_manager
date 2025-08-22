@@ -4,22 +4,22 @@ import 'package:fund_manager/core/utils/format_utils.dart';
 import 'package:fund_manager/features/funds/domain/models/user_fund.dart';
 
 class SubscriptionInfoCard extends StatelessWidget {
-  final UserFund userFund;
 
+  final UserFund? effectiveUserFund;
   const SubscriptionInfoCard({
     super.key,
-    required this.userFund,
+    required this.effectiveUserFund,
   });
 
   @override
   Widget build(BuildContext context) {
     return Container(
-      padding: EdgeInsets.all(12.w),
+      padding: EdgeInsets.all(8.w),
       decoration: BoxDecoration(
-        color: Colors.blue.withOpacity(0.1),
+        color: Colors.green.withOpacity(0.1),
         borderRadius: BorderRadius.circular(8.r),
         border: Border.all(
-          color: Colors.blue.withOpacity(0.3),
+          color: Colors.green.withOpacity(0.3),
           width: 1,
         ),
       ),
@@ -29,90 +29,110 @@ class SubscriptionInfoCard extends StatelessWidget {
           Row(
             children: [
               Icon(
-                Icons.account_balance_wallet,
-                size: 16.sp,
-                color: Colors.blue,
+                Icons.trending_up,
+                size: 14.sp,
+                color: Colors.green[700],
               ),
-              SizedBox(width: 8.w),
+              SizedBox(width: 4.w),
               Text(
                 'Tu Inversión',
                 style: TextStyle(
-                  fontSize: 12.sp,
-                  color: Colors.blue[700],
+                  fontSize: 11.sp,
+                  color: Colors.green[700],
                   fontWeight: FontWeight.w600,
                 ),
               ),
             ],
           ),
-          SizedBox(height: 8.h),
+          SizedBox(height: 6.h),
           Row(
             children: [
               Expanded(
-                child: _buildInfoItem(
-                  'Monto Invertido',
-                  '\$${FormatUtils.formatAmount(userFund.investedAmount)}',
+                child: _buildSubscriptionDetail(
+                  'Invertido',
+                  '\$${FormatUtils.formatAmount(effectiveUserFund?.investedAmount ?? 0)}',
                   Colors.blue[700]!,
                 ),
               ),
-              SizedBox(width: 16.w),
               Expanded(
-                child: _buildInfoItem(
+                child: _buildSubscriptionDetail(
                   'Valor Actual',
-                  '\$${FormatUtils.formatAmount(userFund.currentValue)}',
+                  '\$${FormatUtils.formatAmount(effectiveUserFund?.getCalculatedCurrentValue() ?? 0)}',
                   Colors.green[700]!,
                 ),
               ),
             ],
           ),
-          if (userFund.performance != 0) ...[
-            SizedBox(height: 8.h),
-            Row(
-              children: [
-                Icon(
-                  userFund.performance > 0 
-                      ? Icons.trending_up 
-                      : Icons.trending_down,
-                  size: 14.sp,
-                  color: userFund.performance > 0 ? Colors.green : Colors.red,
+          SizedBox(height: 4.h),
+          Row(
+            children: [
+              Expanded(
+                child: _buildSubscriptionDetail(
+                  'Ganancias',
+                  '\$${FormatUtils.formatAmount(effectiveUserFund?.getTotalGains() ?? 0)}',
+                  (effectiveUserFund?.getTotalGains() ?? 0) >= 0 ? Colors.green[700]! : Colors.red[700]!,
                 ),
-                SizedBox(width: 4.w),
-                Text(
-                  'Rendimiento: ${userFund.performance > 0 ? '+' : ''}${userFund.performance.toStringAsFixed(2)}%',
+              ),
+              Expanded(
+                child: _buildSubscriptionDetail(
+                  'Rendimiento',
+                  '${effectiveUserFund?.getCurrentPerformance().toStringAsFixed(2)}%',
+                  Colors.orange[700]!,
+                ),
+              ),
+            ],
+          ),
+          SizedBox(height: 4.h),
+          Row(
+            children: [
+              Icon(
+                Icons.access_time,
+                size: 12.sp,
+                color: Colors.green[600],
+              ),
+              SizedBox(width: 4.w),
+              Expanded(
+                child: Text(
+                  'Actualizado cada minuto - Rendimiento fijo: ${effectiveUserFund?.fixedPerformance.toStringAsFixed(2)}% por minuto',
                   style: TextStyle(
-                    fontSize: 11.sp,
-                    fontWeight: FontWeight.w600,
-                    color: userFund.performance > 0 ? Colors.green : Colors.red,
+                    fontSize: 10.sp,
+                    color: Colors.green[600],
+                    fontWeight: FontWeight.w500,
                   ),
                 ),
-              ],
-            ),
-          ],
+              ),
+            ],
+          ),
         ],
       ),
     );
   }
 
-  Widget _buildInfoItem(String label, String value, Color color) {
+  Widget _buildSubscriptionDetail(String label, String value, Color color) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Text(
           label,
           style: TextStyle(
-            fontSize: 10.sp,
+            fontSize: 9.sp,
             color: Colors.grey[600],
+            fontWeight: FontWeight.w500,
           ),
         ),
         SizedBox(height: 2.h),
         Text(
           value,
           style: TextStyle(
-            fontSize: 12.sp,
+            fontSize: 11.sp,
             fontWeight: FontWeight.bold,
             color: color,
           ),
+          maxLines: 1,
+          overflow: TextOverflow.ellipsis,
         ),
       ],
     );
   }
+
 }

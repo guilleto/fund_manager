@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:equatable/equatable.dart';
+import 'dart:async';
+import 'dart:math';
 import 'package:fund_manager/core/services/user_service.dart';
 
 import 'package:fund_manager/features/funds/domain/models/fund.dart';
@@ -68,7 +70,18 @@ class FundsSortBy extends FundsEvent {
   List<Object?> get props => [sortBy, ascending];
 }
 
+class FundsSelectFund extends FundsEvent {
+  final Fund fund;
 
+  const FundsSelectFund({required this.fund});
+
+  @override
+  List<Object?> get props => [fund];
+}
+
+class FundsClearSelectedFund extends FundsEvent {
+  const FundsClearSelectedFund();
+}
 
 class FundsSyncWithAppBloc extends FundsEvent {
   final User? currentUser;
@@ -113,6 +126,7 @@ class FundsLoaded extends FundsState {
   final List<Transaction> transactions;
   final bool isLoading;
   final String? errorMessage;
+  final Fund? selectedFund;
 
   const FundsLoaded({
     required this.allFunds,
@@ -126,6 +140,7 @@ class FundsLoaded extends FundsState {
     this.transactions = const [],
     this.isLoading = false,
     this.errorMessage,
+    this.selectedFund,
   });
 
   FundsLoaded copyWith({
@@ -140,6 +155,7 @@ class FundsLoaded extends FundsState {
     List<Transaction>? transactions,
     bool? isLoading,
     String? errorMessage,
+    Fund? selectedFund,
   }) {
     return FundsLoaded(
       allFunds: allFunds ?? this.allFunds,
@@ -153,6 +169,7 @@ class FundsLoaded extends FundsState {
       transactions: transactions ?? this.transactions,
       isLoading: isLoading ?? this.isLoading,
       errorMessage: errorMessage,
+      selectedFund: selectedFund ?? this.selectedFund,
     );
   }
 
@@ -169,6 +186,7 @@ class FundsLoaded extends FundsState {
         transactions,
         isLoading,
         errorMessage,
+        selectedFund,
       ];
 }
 
@@ -229,6 +247,7 @@ class FundsSummary extends Equatable {
 // BLoC
 class FundsBloc extends Bloc<FundsEvent, FundsState> {
   final UserService _userService;
+  Timer? _updateTimer;
 
   FundsBloc(this._userService) : super(const FundsInitial()) {
     on<FundsStarted>(_onFundsStarted);
@@ -238,7 +257,18 @@ class FundsBloc extends Bloc<FundsEvent, FundsState> {
     on<FundsFilterByAmountRange>(_onFilterByAmountRange);
     on<FundsClearFilters>(_onClearFilters);
     on<FundsSortBy>(_onSortBy);
+    on<FundsSelectFund>(_onSelectFund);
+    on<FundsClearSelectedFund>(_onClearSelectedFund);
     on<FundsSyncWithAppBloc>(_onSyncWithAppBloc);
+    
+    // Iniciar timer para actualizar valores cada segundo
+    _startUpdateTimer();
+  }
+
+  @override
+  Future<void> close() {
+    _updateTimer?.cancel();
+    return super.close();
   }
 
   void _onFundsStarted(FundsStarted event, Emitter<FundsState> emit) {
@@ -322,6 +352,20 @@ class FundsBloc extends Bloc<FundsEvent, FundsState> {
     }
   }
 
+  void _onSelectFund(FundsSelectFund event, Emitter<FundsState> emit) {
+    if (state is FundsLoaded) {
+      final currentState = state as FundsLoaded;
+      emit(currentState.copyWith(selectedFund: event.fund));
+    }
+  }
+
+  void _onClearSelectedFund(FundsClearSelectedFund event, Emitter<FundsState> emit) {
+    if (state is FundsLoaded) {
+      final currentState = state as FundsLoaded;
+      emit(currentState.copyWith(selectedFund: null));
+    }
+  }
+
 
 
   void _onSyncWithAppBloc(FundsSyncWithAppBloc event, Emitter<FundsState> emit) {
@@ -345,60 +389,55 @@ class FundsBloc extends Bloc<FundsEvent, FundsState> {
   }
 
   void _loadFundsData(Emitter<FundsState> emit) {
-    // Datos mock de fondos
+    // Datos mock de fondos con valores dinámicos basados en riesgo
     final allFunds = [
-      const Fund(
+      Fund(
         id: 1,
         name: 'FPV_BTG_PACTUAL_RECAUDADORA',
         minAmount: 75000,
         category: 'FPV',
         type: 'Fondo de Pensiones Voluntarias',
-        value: 0.0,
-        performance: 0.0,
+        performance: _generateDynamicPerformance(DateTime.now().millisecondsSinceEpoch, 1, 'Medio'),
         risk: 'Medio',
         status: 'Disponible',
       ),
-      const Fund(
+      Fund(
         id: 2,
         name: 'FPV_BTG_PACTUAL_ECOPETROL',
         minAmount: 125000,
         category: 'FPV',
         type: 'Fondo de Pensiones Voluntarias',
-        value: 0.0,
-        performance: 0.0,
+        performance: _generateDynamicPerformance(DateTime.now().millisecondsSinceEpoch, 2, 'Alto'),
         risk: 'Alto',
         status: 'Disponible',
       ),
-      const Fund(
+      Fund(
         id: 3,
         name: 'DEUDAPRIVADA',
         minAmount: 50000,
         category: 'FIC',
         type: 'Fondo de Inversión Colectiva',
-        value: 0.0,
-        performance: 0.0,
+        performance: _generateDynamicPerformance(DateTime.now().millisecondsSinceEpoch, 3, 'Bajo'),
         risk: 'Bajo',
         status: 'Disponible',
       ),
-      const Fund(
+      Fund(
         id: 4,
         name: 'FDO-ACCIONES',
         minAmount: 250000,
         category: 'FIC',
         type: 'Fondo de Inversión Colectiva',
-        value: 0.0,
-        performance: 0.0,
+        performance: _generateDynamicPerformance(DateTime.now().millisecondsSinceEpoch, 4, 'Alto'),
         risk: 'Alto',
         status: 'Disponible',
       ),
-      const Fund(
+      Fund(
         id: 5,
         name: 'FPV_BTG_PACTUAL_DINAMICA',
         minAmount: 100000,
         category: 'FPV',
         type: 'Fondo de Pensiones Voluntarias',
-        value: 0.0,
-        performance: 0.0,
+        performance: _generateDynamicPerformance(DateTime.now().millisecondsSinceEpoch, 5, 'Medio-Alto'),
         risk: 'Medio-Alto',
         status: 'Disponible',
       ),
@@ -475,5 +514,57 @@ class FundsBloc extends Bloc<FundsEvent, FundsState> {
     }
     
     return sortedFunds;
+  }
+
+  void _startUpdateTimer() {
+    _updateTimer?.cancel();
+    _updateTimer = Timer.periodic(const Duration(minutes: 1), (timer) {
+      if (state is FundsLoaded) {
+        // Solo actualizar los rendimientos de los fondos disponibles
+        add(const FundsRefresh());
+      }
+    });
+  }
+
+  double _generateDynamicPerformance(int timestamp, int fundId, String risk) {
+    final random = Random(timestamp + fundId + 1000);
+    final basePerformance = _getBasePerformanceForRisk(risk);
+    final volatility = _getPerformanceVolatilityForRisk(risk);
+    
+    // Generar rendimiento con tendencia y ruido
+    final trend = sin(timestamp / 15000.0 + fundId) * 0.05;
+    final noise = (random.nextDouble() - 0.5) * volatility;
+    
+    return (basePerformance + trend + noise).clamp(-5.0, 10.0);
+  }
+
+  double _getBasePerformanceForRisk(String risk) {
+    switch (risk) {
+      case 'Bajo':
+        return 0.5; // 0.5% rendimiento por minuto (simula rendimiento bajo)
+      case 'Medio':
+        return 1.0; // 1% rendimiento por minuto (simula rendimiento medio)
+      case 'Medio-Alto':
+        return 1.5; // 1.5% rendimiento por minuto (simula rendimiento medio-alto)
+      case 'Alto':
+        return 2.0; // 2% rendimiento por minuto (simula rendimiento alto)
+      default:
+        return 1.0;
+    }
+  }
+
+  double _getPerformanceVolatilityForRisk(String risk) {
+    switch (risk) {
+      case 'Bajo':
+        return 0.1; // ±0.1% volatilidad por minuto
+      case 'Medio':
+        return 0.2; // ±0.2% volatilidad por minuto
+      case 'Medio-Alto':
+        return 0.3; // ±0.3% volatilidad por minuto
+      case 'Alto':
+        return 0.5; // ±0.5% volatilidad por minuto
+      default:
+        return 0.2;
+    }
   }
 }

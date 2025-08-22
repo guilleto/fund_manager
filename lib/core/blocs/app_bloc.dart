@@ -1,11 +1,12 @@
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:equatable/equatable.dart';
-import '../navigation/app_router.dart';
-import '../services/user_service.dart';
-import '../../features/funds/domain/models/user.dart';
-import '../../features/funds/domain/models/user_fund.dart';
-import '../../features/funds/domain/models/transaction.dart';
-import '../../features/funds/domain/models/fund.dart';
+import 'dart:async';
+import 'package:fund_manager/core/navigation/app_router.dart';
+import 'package:fund_manager/core/services/user_service.dart';
+import 'package:fund_manager/features/funds/domain/models/user.dart';
+import 'package:fund_manager/features/funds/domain/models/user_fund.dart';
+import 'package:fund_manager/features/funds/domain/models/transaction.dart';
+import 'package:fund_manager/features/funds/domain/models/fund.dart';
 
 // Eventos
 abstract class AppEvent extends Equatable {
@@ -152,6 +153,7 @@ class AppError extends AppState {
 // BLoC
 class AppBloc extends Bloc<AppEvent, AppState> {
   final UserService _userService;
+  Timer? _userFundsUpdateTimer;
 
   AppBloc(this._userService) : super(const AppInitial()) {
     on<AppStarted>(_onAppStarted);
@@ -161,6 +163,12 @@ class AppBloc extends Bloc<AppEvent, AppState> {
     on<AppSubscribeToFund>(_onSubscribeToFund);
     on<AppCancelFund>(_onCancelFund);
     on<AppUpdateNotificationPreference>(_onUpdateNotificationPreference);
+  }
+
+  @override
+  Future<void> close() {
+    _userFundsUpdateTimer?.cancel();
+    return super.close();
   }
 
   void _onAppStarted(AppStarted event, Emitter<AppState> emit) async {
@@ -187,6 +195,10 @@ class AppBloc extends Bloc<AppEvent, AppState> {
     if (state is AppLoaded) {
       final currentState = state as AppLoaded;
       final canGoBack = event.route != AppRoute.welcome;
+      
+      // Activar/desactivar timer según la página
+      _manageUserFundsTimer(event.route);
+      
       emit(currentState.copyWith(
         currentRoute: event.route,
         canGoBack: canGoBack,
@@ -318,5 +330,68 @@ class AppBloc extends Bloc<AppEvent, AppState> {
         ));
       }
     }
+  }
+
+  /// Gestiona el timer para actualizar los fondos del usuario
+  void _manageUserFundsTimer(AppRoute route) {
+    // Cancelar timer existente
+    _userFundsUpdateTimer?.cancel();
+    
+    print('DEBUG: AppBloc - Navegando a: $route');
+    
+    // Solo activar timer en páginas relacionadas con fondos
+    if (route == AppRoute.funds || route == AppRoute.myFunds || route == AppRoute.fundDetails) {
+      print('DEBUG: AppBloc - Activando timer para actualizar fondos del usuario');
+      _startUserFundsUpdateTimer();
+    } else {
+      print('DEBUG: AppBloc - Desactivando timer (no es página de fondos)');
+    }
+  }
+
+  /// Inicia el timer para actualizar los fondos del usuario cada minuto
+  void _startUserFundsUpdateTimer() {
+    _userFundsUpdateTimer?.cancel();
+    _userFundsUpdateTimer = Timer.periodic(const Duration(minutes: 1), (timer) {
+      if (state is AppLoaded) {
+        _updateUserFunds();
+      }
+    });
+  }
+
+  /// Actualiza los fondos del usuario
+  void _updateUserFunds() async {
+    if (state is AppLoaded) {
+      final currentState = state as AppLoaded;
+      
+      try {
+        print('DEBUG: AppBloc - Actualizando fondos del usuario...');
+        final userFunds = await _userService.getUserFunds();
+        
+        // Solo emitir si hay cambios
+        if (userFunds.length != currentState.userFunds.length ||
+            _hasUserFundsChanged(currentState.userFunds, userFunds)) {
+          print('DEBUG: AppBloc - Fondos del usuario actualizados, emitiendo nuevo estado');
+          emit(currentState.copyWith(userFunds: userFunds));
+        } else {
+          print('DEBUG: AppBloc - No hay cambios en los fondos del usuario');
+        }
+      } catch (e) {
+        print('Error actualizando fondos del usuario: $e');
+      }
+    }
+  }
+
+  /// Verifica si los fondos del usuario han cambiado
+  bool _hasUserFundsChanged(List<UserFund> oldFunds, List<UserFund> newFunds) {
+    if (oldFunds.length != newFunds.length) return true;
+    
+    for (int i = 0; i < oldFunds.length; i++) {
+      if (oldFunds[i].currentValue != newFunds[i].currentValue ||
+          oldFunds[i].isActive != newFunds[i].isActive) {
+        return true;
+      }
+    }
+    
+    return false;
   }
 }

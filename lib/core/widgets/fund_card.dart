@@ -10,6 +10,7 @@ import 'package:fund_manager/core/blocs/app_bloc.dart';
 import 'package:fund_manager/core/navigation/app_router.dart';
 import 'package:fund_manager/features/funds/domain/models/fund.dart';
 import 'package:fund_manager/features/funds/domain/models/user_fund.dart';
+import 'package:fund_manager/features/funds/presentation/blocs/funds_bloc.dart';
 
 class FundCard extends StatelessWidget {
   final Fund fund;
@@ -130,9 +131,18 @@ class FundCard extends StatelessWidget {
                     ),
                   ],
                 ),
-                if (isSubscribed) ...[
+                SizedBox(height: 8.h),
+                Row(
+                  children: [
+                    Expanded(
+                      child: _buildFundDetail('Rendimiento',
+                          '${fund.performance.toStringAsFixed(2)}% por minuto'),
+                    ),
+                  ],
+                ),
+                if (isSubscribed && effectiveUserFund != null) ...[
                   SizedBox(height: 8.h),
-                  SubscriptionInfoCard(userFund: effectiveUserFund),
+                  SubscriptionInfoCard(effectiveUserFund: effectiveUserFund),
                 ],
                 if (showActions) ...[
                   SizedBox(height: 12.h),
@@ -143,9 +153,10 @@ class FundCard extends StatelessWidget {
                           text: 'Ver Detalles',
                           onPressed: onViewDetails ??
                               () {
-                                context.read<AppBloc>().add(AppNavigateTo(
-                                    AppRoute.fundDetails,
-                                    arguments: {'fund': fund}));
+                                // Seleccionar el fondo en el FundsBloc
+                                context.read<FundsBloc>().add(FundsSelectFund(fund: fund));
+                                // Navegar a la página de detalles
+                                context.read<AppBloc>().add(const AppNavigateTo(AppRoute.fundDetails));
                               },
                           type: ButtonType.outline,
                         ),

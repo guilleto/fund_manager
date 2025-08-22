@@ -17,31 +17,16 @@ import 'package:fund_manager/features/funds/domain/models/fund.dart';
 import 'package:fund_manager/features/funds/domain/models/user.dart';
 
 class FundDetailsPage extends StatelessWidget {
-  final Fund fund;
-
-  const FundDetailsPage({
-    super.key,
-    required this.fund,
-  });
+  const FundDetailsPage({super.key});
 
   @override
   Widget build(BuildContext context) {
-    return BlocProvider(
-      create: (context) =>
-          FundsBloc(MockUserService(MockNotificationService()))
-            ..add(const FundsStarted()),
-      child: FundDetailsView(fund: fund),
-    );
+    return const FundDetailsView();
   }
 }
 
 class FundDetailsView extends StatefulWidget {
-  final Fund fund;
-
-  const FundDetailsView({
-    super.key,
-    required this.fund,
-  });
+  const FundDetailsView({super.key});
 
   @override
   State<FundDetailsView> createState() => _FundDetailsViewState();
@@ -56,6 +41,7 @@ class _FundDetailsViewState extends State<FundDetailsView> {
 
   @override
   void initState() {
+    print('DEBUG: FundDetailsView initState');
     super.initState();
     // Los datos del usuario ya están cargados en AppBloc
   }
@@ -68,65 +54,143 @@ class _FundDetailsViewState extends State<FundDetailsView> {
 
   @override
   Widget build(BuildContext context) {
-    return BlocListener<AppBloc, AppState>(
-      listener: (context, state) {
-        if (state is AppLoaded) {
-          // Manejar estado de carga
-          if (state.isLoading && _isSubscribing) {
-            // Mantener el estado de carga
-          } else if (!state.isLoading && _isSubscribing) {
-            // Proceso completado
-            setState(() {
-              _isSubscribing = false;
-            });
-
-            // Mostrar mensajes de error si existen
-            if (state.errorMessage != null && state.errorMessage!.isNotEmpty) {
-              ScaffoldMessenger.of(context).showSnackBar(
-                SnackBar(
-                  content: Text(state.errorMessage!),
-                  backgroundColor: Colors.red,
-                  duration: const Duration(seconds: 4),
-                ),
-              );
-            } else {
-              // Éxito en la suscripción
-              ScaffoldMessenger.of(context).showSnackBar(
-                SnackBar(
-                  content: Text('¡Suscripción exitosa a ${widget.fund.name}!'),
-                  backgroundColor: Colors.green,
-                  duration: const Duration(seconds: 3),
-                  action: SnackBarAction(
-                    label: 'Ver Mis Fondos',
-                    textColor: Colors.white,
-                    onPressed: () {
-                      context
-                          .read<AppBloc>()
-                          .add(const AppNavigateTo(AppRoute.myFunds));
-                    },
-                  ),
-                ),
-              );
-
-              // Limpiar formulario
-              _amountController.clear();
+    return BlocBuilder<FundsBloc, FundsState>(
+      builder: (context, fundsState) {
+        if (fundsState is! FundsLoaded || fundsState.selectedFund == null) {
+          // Forzar navegación hacia atrás cuando no hay fondo seleccionado
+          WidgetsBinding.instance.addPostFrameCallback((_) {
+            if (mounted) {
+              print('DEBUG: FundDetailsPage - No hay fondo seleccionado, navegando hacia atrás');
+              context.read<AppBloc>().add(const AppNavigateTo(AppRoute.funds));
             }
-          }
+          });
+          
+          return const AppScaffold(
+            title: 'Detalles del Fondo',
+            showDrawer: true,
+            body: Center(
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  CircularProgressIndicator(),
+                  SizedBox(height: 16),
+                  Text('Redirigiendo...'),
+                ],
+              ),
+            ),
+          );
         }
+
+        final fund = fundsState.selectedFund!;
+
+                return MultiBlocListener(
+          listeners: [
+            BlocListener<AppBloc, AppState>(
+              listener: (context, state) {
+                if (state is AppLoaded) {
+                                // Verificar si el fondo seleccionado ya no está activo
+              final selectedFundId = fund.id.toString();
+              final userFund = state.userFunds
+                  .where((uf) => uf.fundId == selectedFundId && uf.isActive)
+                  .firstOrNull;
+              
+              print('DEBUG: FundDetailsPage - Verificando fondo $selectedFundId');
+              print('DEBUG: FundDetailsPage - UserFund activo: ${userFund != null}');
+              print('DEBUG: FundDetailsPage - Total userFunds: ${state.userFunds.length}');
+              
+              // Si el usuario estaba suscrito al fondo pero ya no está activo, navegar hacia atrás
+              if (userFund == null) {
+                // Buscar si había una suscripción previa que ya no existe
+                final wasSubscribed = state.userFunds
+                    .where((uf) => uf.fundId == selectedFundId)
+                    .isNotEmpty;
+                
+                print('DEBUG: FundDetailsPage - ¿Había suscripción previa? $wasSubscribed');
+                
+                if (wasSubscribed) {
+                      print('DEBUG: FundDetailsPage - Fondo cancelado, navegando hacia atrás');
+                      // Guardar el AppBloc antes del async gap
+                      final appBloc = context.read<AppBloc>();
+                      
+                      // Mostrar mensaje y navegar hacia atrás
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        const SnackBar(
+                          content: Text('El fondo ha sido cancelado. Redirigiendo...'),
+                          backgroundColor: Colors.orange,
+                          duration: Duration(seconds: 2),
+                        ),
+                      );
+                      
+                      // Navegar hacia atrás después de un breve delay
+                      Future.delayed(const Duration(milliseconds: 500), () {
+                        if (mounted) {
+                          appBloc.add(const AppNavigateBack());
+                        }
+                      });
+                      return;
+                    }
+                  }
+
+                  // Manejar estado de carga
+                  if (state.isLoading && _isSubscribing) {
+                    // Mantener el estado de carga
+                  } else if (!state.isLoading && _isSubscribing) {
+                    // Proceso completado
+                    setState(() {
+                      _isSubscribing = false;
+                    });
+
+                    // Mostrar mensajes de error si existen
+                    if (state.errorMessage != null && state.errorMessage!.isNotEmpty) {
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        SnackBar(
+                          content: Text(state.errorMessage!),
+                          backgroundColor: Colors.red,
+                          duration: const Duration(seconds: 4),
+                        ),
+                      );
+                    } else {
+                      // Éxito en la suscripción
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        SnackBar(
+                          content: Text('¡Suscripción exitosa a ${fund.name}!'),
+                          backgroundColor: Colors.green,
+                          duration: const Duration(seconds: 3),
+                          action: SnackBarAction(
+                            label: 'Ver Mis Fondos',
+                            textColor: Colors.white,
+                            onPressed: () {
+                              context
+                                  .read<AppBloc>()
+                                  .add(const AppNavigateTo(AppRoute.myFunds));
+                            },
+                          ),
+                        ),
+                      );
+
+                      // Limpiar formulario
+                      _amountController.clear();
+                    }
+                  }
+                }
+              },
+            ),
+          ],
+          child: AppScaffold(
+            title: 'Detalles del Fondo',
+            showDrawer: true,
+            body: ResponsiveWidget(
+              mobile: _buildMobileLayout(fund),
+              tablet: _buildTabletDesktopLayout(fund),
+              desktop: _buildTabletDesktopLayout(fund),
+            ),
+          ),
+        );
       },
-      child: AppScaffold(
-        title: 'Detalles del Fondo',
-        showDrawer: false, // No mostrar drawer en detalles
-        body: ResponsiveWidget(
-          mobile: _buildMobileLayout(),
-          tablet: _buildTabletDesktopLayout(),
-          desktop: _buildTabletDesktopLayout(),
-        ),
-      ),
     );
   }
 
-  Widget _buildMobileLayout() {
+  Widget _buildMobileLayout(Fund fund) {
     return BlocBuilder<AppBloc, AppState>(
       builder: (context, appState) {
         if (appState is AppLoaded) {
@@ -135,9 +199,9 @@ class _FundDetailsViewState extends State<FundDetailsView> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                _buildFundCard(context, appState.currentUser),
+                _buildFundCard(context, appState.currentUser, fund),
                 SizedBox(height: 24.h),
-                _buildSubscriptionForm(context, appState.currentUser),
+                _buildSubscriptionForm(context, appState.currentUser, fund),
                 if (appState.errorMessage != null) ...[
                   SizedBox(height: 16.h),
                   _buildErrorMessage(appState.errorMessage!),
@@ -151,7 +215,7 @@ class _FundDetailsViewState extends State<FundDetailsView> {
     );
   }
 
-  Widget _buildTabletDesktopLayout() {
+  Widget _buildTabletDesktopLayout(Fund fund) {
     return BlocBuilder<AppBloc, AppState>(
       builder: (context, appState) {
         if (appState is AppLoaded) {
@@ -161,7 +225,7 @@ class _FundDetailsViewState extends State<FundDetailsView> {
                 flex: 2,
                 child: SingleChildScrollView(
                   padding: EdgeInsets.all(24.w),
-                  child: _buildFundCard(context, appState.currentUser),
+                  child: _buildFundCard(context, appState.currentUser, fund),
                 ),
               ),
               Expanded(
@@ -184,7 +248,7 @@ class _FundDetailsViewState extends State<FundDetailsView> {
                         style: Theme.of(context).textTheme.headlineSmall,
                       ),
                       SizedBox(height: 24.h),
-                      _buildSubscriptionForm(context, appState.currentUser),
+                      _buildSubscriptionForm(context, appState.currentUser, fund),
                       if (appState.errorMessage != null) ...[
                         SizedBox(height: 16.h),
                         _buildErrorMessage(appState.errorMessage!),
@@ -201,7 +265,7 @@ class _FundDetailsViewState extends State<FundDetailsView> {
     );
   }
 
-  Widget _buildFundCard(BuildContext context, User? currentUser) {
+  Widget _buildFundCard(BuildContext context, User? currentUser, Fund fund) {
     return Card(
       child: Padding(
         padding: EdgeInsets.all(20.w),
@@ -213,7 +277,7 @@ class _FundDetailsViewState extends State<FundDetailsView> {
                 Container(
                   padding: EdgeInsets.all(12.r),
                   decoration: BoxDecoration(
-                    color: FormatUtils.getCategoryColor(widget.fund.category),
+                    color: FormatUtils.getCategoryColor(fund.category),
                     borderRadius: BorderRadius.circular(8.r),
                   ),
                   child: Icon(
@@ -228,14 +292,14 @@ class _FundDetailsViewState extends State<FundDetailsView> {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(
-                        widget.fund.name,
+                        fund.name,
                         style:
                             Theme.of(context).textTheme.headlineSmall?.copyWith(
                                   fontWeight: FontWeight.bold,
                                 ),
                       ),
                       Text(
-                        widget.fund.type,
+                        fund.type,
                         style: Theme.of(context).textTheme.bodyMedium?.copyWith(
                               color: Colors.grey[600],
                             ),
@@ -246,15 +310,13 @@ class _FundDetailsViewState extends State<FundDetailsView> {
               ],
             ),
             SizedBox(height: 24.h),
-            _buildInfoRow('Categoría', widget.fund.category),
-            _buildInfoRow('Riesgo', widget.fund.risk),
-            _buildInfoRow('Estado', widget.fund.status),
+            _buildInfoRow('Categoría', fund.category),
+            _buildInfoRow('Riesgo', fund.risk),
+            _buildInfoRow('Estado', fund.status),
             _buildInfoRow('Monto Mínimo',
-                FormatUtils.formatAmountInt(widget.fund.minAmount)),
-            _buildInfoRow(
-                'Valor Actual', FormatUtils.formatAmount(widget.fund.value)),
+                FormatUtils.formatAmountInt(fund.minAmount)),
             _buildInfoRow('Rendimiento',
-                '${widget.fund.performance.toStringAsFixed(2)}%'),
+                '${fund.performance.toStringAsFixed(2)}% por minuto'),
             if (currentUser != null) ...[
               SizedBox(height: 16.h),
               Divider(),
@@ -296,7 +358,7 @@ class _FundDetailsViewState extends State<FundDetailsView> {
     );
   }
 
-  Widget _buildSubscriptionForm(BuildContext context, User? currentUser) {
+  Widget _buildSubscriptionForm(BuildContext context, User? currentUser, Fund fund) {
     if (currentUser == null) {
       return const Center(child: CircularProgressIndicator());
     }
@@ -325,8 +387,8 @@ class _FundDetailsViewState extends State<FundDetailsView> {
                   if (validation != null) return validation;
 
                   final amount = double.tryParse(value!);
-                  if (amount! < widget.fund.minAmount) {
-                    return 'El monto mínimo es ${FormatUtils.formatAmountInt(widget.fund.minAmount)}';
+                  if (amount! < fund.minAmount) {
+                    return 'El monto mínimo es ${FormatUtils.formatAmountInt(fund.minAmount)}';
                   }
 
                   if (amount > currentUser.balance) {
@@ -357,7 +419,7 @@ class _FundDetailsViewState extends State<FundDetailsView> {
               CustomButton(
                 text: _isSubscribing ? 'Procesando...' : 'Suscribirse',
                 onPressed:
-                    _isSubscribing ? null : () => _handleSubscription(context),
+                    _isSubscribing ? null : () => _handleSubscription(context, fund),
                 type: ButtonType.primary,
                 isFullWidth: true,
               ),
@@ -391,7 +453,7 @@ class _FundDetailsViewState extends State<FundDetailsView> {
     );
   }
 
-  void _handleSubscription(BuildContext context) {
+  void _handleSubscription(BuildContext context, Fund fund) {
     if (!_formKey.currentState!.validate()) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
@@ -416,11 +478,11 @@ class _FundDetailsViewState extends State<FundDetailsView> {
     }
 
     // Validar monto mínimo
-    if (amount < widget.fund.minAmount) {
+    if (amount < fund.minAmount) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text(
-              'El monto mínimo para este fondo es \$${widget.fund.minAmount.toStringAsFixed(0)}'),
+              'El monto mínimo para este fondo es \$${fund.minAmount.toStringAsFixed(0)}'),
           backgroundColor: Colors.red,
           duration: const Duration(seconds: 3),
         ),
@@ -439,7 +501,7 @@ class _FundDetailsViewState extends State<FundDetailsView> {
 
     // Suscribirse al fondo
     context.read<AppBloc>().add(AppSubscribeToFund(
-          fund: widget.fund,
+          fund: fund,
           amount: amount,
         ));
 

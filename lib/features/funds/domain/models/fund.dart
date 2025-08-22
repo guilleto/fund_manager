@@ -8,7 +8,6 @@ class Fund extends Equatable {
   final String type;
   final String risk;
   final String status;
-  final double value;
   final double performance;
 
   const Fund({
@@ -19,7 +18,6 @@ class Fund extends Equatable {
     required this.type,
     required this.risk,
     required this.status,
-    required this.value,
     required this.performance,
   });
 
@@ -32,7 +30,6 @@ class Fund extends Equatable {
         type,
         risk,
         status,
-        value,
         performance,
       ];
 }

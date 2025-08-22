@@ -146,11 +146,10 @@ class AppRouterDelegate extends RouterDelegate<RouteInfo>
           ),
         ];
       case AppRoute.fundDetails:
-        final fund = _currentConfiguration.arguments?['fund'];
         return [
-          MaterialPage(
+          const MaterialPage(
             key: ValueKey('fund-details'),
-            child: FundDetailsPage(fund: fund),
+            child: FundDetailsPage(),
           ),
         ];
       case AppRoute.transactions:
