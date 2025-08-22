@@ -130,7 +130,7 @@ class FundCard extends StatelessWidget {
                     ),
                   ],
                 ),
-                if (isSubscribed && effectiveUserFund != null) ...[
+                if (isSubscribed) ...[
                   SizedBox(height: 8.h),
                   SubscriptionInfoCard(userFund: effectiveUserFund),
                 ],

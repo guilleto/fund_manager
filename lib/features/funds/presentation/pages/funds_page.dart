@@ -76,6 +76,7 @@ class FundsView extends StatelessWidget {
             return BlocBuilder<FundsBloc, FundsState>(
               builder: (context, fundsState) {
                 return AutoRefreshWidget(
+                  refreshInterval: const Duration(minutes: 5),
                   child: AppScaffold(
                     title: 'Fondos Disponibles',
                     actions: [
@@ -210,10 +211,10 @@ class FundsView extends StatelessWidget {
             contentPadding: EdgeInsets.symmetric(horizontal: 12, vertical: 8),
           ),
           hint: const Text('Todas las categorías'),
-          items: [
-            const DropdownMenuItem(value: null, child: Text('Todas las categorías')),
-            const DropdownMenuItem(value: 'FPV', child: Text('FPV')),
-            const DropdownMenuItem(value: 'FIC', child: Text('FIC')),
+          items: const [
+            DropdownMenuItem(value: null, child: Text('Todas las categorías')),
+            DropdownMenuItem(value: 'FPV', child: Text('FPV')),
+            DropdownMenuItem(value: 'FIC', child: Text('FIC')),
           ],
           onChanged: (value) {
             context.read<FundsBloc>().add(FundsFilterByCategory(category: value));
@@ -239,12 +240,12 @@ class FundsView extends StatelessWidget {
             contentPadding: EdgeInsets.symmetric(horizontal: 12, vertical: 8),
           ),
           hint: const Text('Todos los riesgos'),
-          items: [
-            const DropdownMenuItem(value: null, child: Text('Todos los riesgos')),
-            const DropdownMenuItem(value: 'Bajo', child: Text('Bajo')),
-            const DropdownMenuItem(value: 'Medio', child: Text('Medio')),
-            const DropdownMenuItem(value: 'Medio-Alto', child: Text('Medio-Alto')),
-            const DropdownMenuItem(value: 'Alto', child: Text('Alto')),
+          items: const [
+            DropdownMenuItem(value: null, child: Text('Todos los riesgos')),
+            DropdownMenuItem(value: 'Bajo', child: Text('Bajo')),
+            DropdownMenuItem(value: 'Medio', child: Text('Medio')),
+            DropdownMenuItem(value: 'Medio-Alto', child: Text('Medio-Alto')),
+            DropdownMenuItem(value: 'Alto', child: Text('Alto')),
           ],
           onChanged: (value) {
             context.read<FundsBloc>().add(FundsFilterByRisk(risk: value));
@@ -255,32 +256,50 @@ class FundsView extends StatelessWidget {
   }
 
   Widget _buildMinAmountFilter(BuildContext context, FundsLoaded state) {
+    // Calcular el rango de montos disponibles
+    final allFunds = state.allFunds;
+    final minAmount = allFunds.map((f) => f.minAmount).reduce((a, b) => a < b ? a : b);
+    final maxAmount = allFunds.map((f) => f.minAmount).reduce((a, b) => a > b ? a : b);
+    
+    // Usar el rango actual o crear uno por defecto
+    final currentRange = state.filters.amountRange ?? RangeValues(
+      minAmount.toDouble(), 
+      maxAmount.toDouble()
+    );
+
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Text(
-          'Monto mínimo',
+          'Rango de monto mínimo',
           style: TextStyle(fontSize: 14.sp, fontWeight: FontWeight.w500),
         ),
         SizedBox(height: 8.h),
-        DropdownButtonFormField<int>(
-          value: state.filters.minAmount,
-          decoration: const InputDecoration(
-            border: OutlineInputBorder(),
-            contentPadding: EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+        RangeSlider(
+          values: currentRange,
+          min: minAmount.toDouble(),
+          max: maxAmount.toDouble(),
+          divisions: 10,
+          labels: RangeLabels(
+            FormatUtils.formatCurrencyInt(currentRange.start.toInt()),
+            FormatUtils.formatCurrencyInt(currentRange.end.toInt()),
           ),
-          hint: const Text('Cualquier monto'),
-          items: [
-            const DropdownMenuItem(value: null, child: Text('Cualquier monto')),
-            const DropdownMenuItem(value: 50000, child: Text('\$50,000')),
-            const DropdownMenuItem(value: 75000, child: Text('\$75,000')),
-            const DropdownMenuItem(value: 100000, child: Text('\$100,000')),
-            const DropdownMenuItem(value: 125000, child: Text('\$125,000')),
-            const DropdownMenuItem(value: 250000, child: Text('\$250,000')),
-          ],
-          onChanged: (value) {
-            context.read<FundsBloc>().add(FundsFilterByMinAmount(minAmount: value));
+          onChanged: (RangeValues values) {
+            context.read<FundsBloc>().add(FundsFilterByAmountRange(amountRange: values));
           },
+        ),
+        Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: [
+            Text(
+              'Desde: ${FormatUtils.formatCurrencyInt(currentRange.start.toInt())}',
+              style: TextStyle(fontSize: 12.sp, color: Colors.grey[600]),
+            ),
+            Text(
+              'Hasta: ${FormatUtils.formatCurrencyInt(currentRange.end.toInt())}',
+              style: TextStyle(fontSize: 12.sp, color: Colors.grey[600]),
+            ),
+          ],
         ),
       ],
     );
@@ -309,10 +328,6 @@ class FundsView extends StatelessWidget {
                       userFund: isSubscribed ? appState.userFunds.firstWhere(
                         (userFund) => userFund.fundId == fund.id.toString() && userFund.isActive,
                       ) : null,
-                      onSubscribe: () {
-                        // Mostrar diálogo para ingresar monto
-                        _showSubscriptionDialog(context, fund);
-                      },
                     );
                   },
                 ),
@@ -352,7 +367,7 @@ class FundsView extends StatelessWidget {
             Expanded(
               child: _buildSummaryItem(
                 'Total Min.',
-                FormatUtils.formatCurrency(state.summary.totalMinAmount),
+                FormatUtils.formatCurrencyInt(state.summary.totalMinAmount.toInt()),
                 Icons.attach_money,
               ),
             ),
@@ -386,48 +401,5 @@ class FundsView extends StatelessWidget {
     );
   }
 
-  void _showSubscriptionDialog(BuildContext context, Fund fund) {
-    final amountController = TextEditingController();
-    
-    showDialog(
-      context: context,
-      builder: (context) => AlertDialog(
-        title: Text('Suscribirse a ${fund.name}'),
-        content: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Text('Monto mínimo: \$${fund.minAmount.toStringAsFixed(0)}'),
-            SizedBox(height: 16.h),
-            TextField(
-              controller: amountController,
-              keyboardType: TextInputType.number,
-              decoration: const InputDecoration(
-                labelText: 'Monto a invertir',
-                prefixText: '\$',
-              ),
-            ),
-          ],
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.of(context).pop(),
-            child: const Text('Cancelar'),
-          ),
-          ElevatedButton(
-            onPressed: () {
-              final amount = double.tryParse(amountController.text);
-              if (amount != null && amount >= fund.minAmount) {
-                context.read<AppBloc>().add(AppSubscribeToFund(
-                  fund: fund,
-                  amount: amount,
-                ));
-                Navigator.of(context).pop();
-              }
-            },
-            child: const Text('Suscribirse'),
-          ),
-        ],
-      ),
-    );
-  }
+  
 }

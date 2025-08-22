@@ -1,3 +1,4 @@
+import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:equatable/equatable.dart';
 import 'package:fund_manager/core/services/user_service.dart';
@@ -41,13 +42,13 @@ class FundsFilterByRisk extends FundsEvent {
   List<Object?> get props => [risk];
 }
 
-class FundsFilterByMinAmount extends FundsEvent {
-  final int? minAmount;
+class FundsFilterByAmountRange extends FundsEvent {
+  final RangeValues? amountRange;
 
-  const FundsFilterByMinAmount({this.minAmount});
+  const FundsFilterByAmountRange({this.amountRange});
 
   @override
-  List<Object?> get props => [minAmount];
+  List<Object?> get props => [amountRange];
 }
 
 class FundsClearFilters extends FundsEvent {
@@ -184,28 +185,28 @@ class FundsError extends FundsState {
 class FundsFilters extends Equatable {
   final String? category;
   final String? risk;
-  final int? minAmount;
+  final RangeValues? amountRange;
 
   const FundsFilters({
     this.category,
     this.risk,
-    this.minAmount,
+    this.amountRange,
   });
 
   FundsFilters copyWith({
     String? category,
     String? risk,
-    int? minAmount,
+    RangeValues? amountRange,
   }) {
     return FundsFilters(
       category: category ?? this.category,
       risk: risk ?? this.risk,
-      minAmount: minAmount ?? this.minAmount,
+      amountRange: amountRange ?? this.amountRange,
     );
   }
 
   @override
-  List<Object?> get props => [category, risk, minAmount];
+  List<Object?> get props => [category, risk, amountRange];
 }
 
 class FundsSummary extends Equatable {
@@ -234,7 +235,7 @@ class FundsBloc extends Bloc<FundsEvent, FundsState> {
     on<FundsRefresh>(_onFundsRefresh);
     on<FundsFilterByCategory>(_onFilterByCategory);
     on<FundsFilterByRisk>(_onFilterByRisk);
-    on<FundsFilterByMinAmount>(_onFilterByMinAmount);
+    on<FundsFilterByAmountRange>(_onFilterByAmountRange);
     on<FundsClearFilters>(_onClearFilters);
     on<FundsSortBy>(_onSortBy);
     on<FundsSyncWithAppBloc>(_onSyncWithAppBloc);
@@ -281,10 +282,10 @@ class FundsBloc extends Bloc<FundsEvent, FundsState> {
     }
   }
 
-  void _onFilterByMinAmount(FundsFilterByMinAmount event, Emitter<FundsState> emit) {
+  void _onFilterByAmountRange(FundsFilterByAmountRange event, Emitter<FundsState> emit) {
     if (state is FundsLoaded) {
       final currentState = state as FundsLoaded;
-      final newFilters = currentState.filters.copyWith(minAmount: event.minAmount);
+      final newFilters = currentState.filters.copyWith(amountRange: event.amountRange);
       final filteredFunds = _applyFilters(currentState.allFunds, newFilters);
       final sortedFunds = _sortFunds(filteredFunds, currentState.sortBy, currentState.sortAscending);
 
@@ -436,8 +437,12 @@ class FundsBloc extends Bloc<FundsEvent, FundsState> {
       if (filters.risk != null && fund.risk != filters.risk) {
         return false;
       }
-      if (filters.minAmount != null && fund.minAmount < filters.minAmount!) {
-        return false;
+      if (filters.amountRange != null) {
+        final minAmount = filters.amountRange!.start;
+        final maxAmount = filters.amountRange!.end;
+        if (fund.minAmount < minAmount || fund.minAmount > maxAmount) {
+          return false;
+        }
       }
       return true;
     }).toList();
