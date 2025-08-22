@@ -18,6 +18,13 @@ class FormatUtils {
     ).format(amount);
   }
 
+  static String formatCurrencyInt(int amount, {String currency = 'USD'}) {
+    return NumberFormat.currency(
+      symbol: currency == 'USD' ? '\$' : currency,
+      decimalDigits: 0,
+    ).format(amount);
+  }
+
   static String formatPercentage(double value) {
     return '${value.toStringAsFixed(2)}%';
   }
