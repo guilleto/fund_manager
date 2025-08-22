@@ -4,6 +4,7 @@ class User extends Equatable {
   final String id;
   final String name;
   final String email;
+  final String? phone;
   final double balance;
   final NotificationPreference notificationPreference;
 
@@ -11,17 +12,19 @@ class User extends Equatable {
     required this.id,
     required this.name,
     required this.email,
+    this.phone,
     required this.balance,
     required this.notificationPreference,
   });
 
   @override
-  List<Object?> get props => [id, name, email, balance, notificationPreference];
+  List<Object?> get props => [id, name, email, phone, balance, notificationPreference];
 
   User copyWith({
     String? id,
     String? name,
     String? email,
+    String? phone,
     double? balance,
     NotificationPreference? notificationPreference,
   }) {
@@ -29,6 +32,7 @@ class User extends Equatable {
       id: id ?? this.id,
       name: name ?? this.name,
       email: email ?? this.email,
+      phone: phone ?? this.phone,
       balance: balance ?? this.balance,
       notificationPreference:
           notificationPreference ?? this.notificationPreference,

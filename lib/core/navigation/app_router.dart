@@ -9,6 +9,7 @@ import '../../features/dashboard/presentation/pages/dashboard_page.dart';
 import '../../features/funds/presentation/pages/funds_page.dart';
 import '../../features/funds/presentation/pages/my_funds_page.dart';
 import '../../features/transactions/presentation/pages/transactions_page.dart';
+import '../../features/settings/presentation/pages/settings_page.dart';
 
 // Definir las rutas disponibles
 enum AppRoute {
@@ -18,6 +19,7 @@ enum AppRoute {
   myFunds,
   fundDetails,
   transactions,
+  settings,
 }
 
 // Clase para manejar la información de la ruta
@@ -53,6 +55,8 @@ class AppRouteInformationParser extends RouteInformationParser<RouteInfo> {
         return const RouteInfo(route: AppRoute.fundDetails);
       case '/transactions':
         return const RouteInfo(route: AppRoute.transactions);
+      case '/settings':
+        return const RouteInfo(route: AppRoute.settings);
       default:
         return const RouteInfo(route: AppRoute.welcome);
     }
@@ -73,6 +77,8 @@ class AppRouteInformationParser extends RouteInformationParser<RouteInfo> {
         return RouteInformation(uri: Uri.parse('/fund-details'));
       case AppRoute.transactions:
         return RouteInformation(uri: Uri.parse('/transactions'));
+      case AppRoute.settings:
+        return RouteInformation(uri: Uri.parse('/settings'));
     }
   }
 }
@@ -157,6 +163,13 @@ class AppRouterDelegate extends RouterDelegate<RouteInfo>
           const MaterialPage(
             key: ValueKey('transactions'),
             child: TransactionsPage(),
+          ),
+        ];
+      case AppRoute.settings:
+        return [
+          const MaterialPage(
+            key: ValueKey('settings'),
+            child: SettingsPage(),
           ),
         ];
     }

@@ -19,6 +19,7 @@ abstract class UserService {
   Future<bool> updateNotificationPreference({
     required NotificationPreference preference,
   });
+  Future<bool> updateUser(User user);
 }
 
 class MockUserService implements UserService {
@@ -29,6 +30,7 @@ class MockUserService implements UserService {
     id: '1',
     name: 'Guillermo C',
     email: 'guilleccubillos@hotmail.com',
+    phone: '+57 300 123 4567',
     balance: 500000.0, // Saldo inicial de COP $500.000
     notificationPreference: NotificationPreference.email,
   );
@@ -259,6 +261,21 @@ class MockUserService implements UserService {
       return true;
     } catch (e) {
       print('Error al actualizar preferencias de notificación: $e');
+      return false;
+    }
+  }
+
+  @override
+  Future<bool> updateUser(User user) async {
+    try {
+      // Simular delay de red
+      await Future.delayed(const Duration(milliseconds: 300));
+
+      _currentUser = user;
+
+      return true;
+    } catch (e) {
+      print('Error al actualizar usuario: $e');
       return false;
     }
   }

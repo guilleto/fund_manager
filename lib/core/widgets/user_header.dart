@@ -3,6 +3,7 @@ import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
 import 'package:fund_manager/core/blocs/app_bloc.dart';
+import 'package:fund_manager/core/blocs/theme_bloc.dart';
 import 'package:fund_manager/core/utils/format_utils.dart';
 import 'package:fund_manager/features/funds/domain/models/user.dart';
 
@@ -28,19 +29,23 @@ class _UserHeaderState extends State<UserHeader> {
 
   @override
   Widget build(BuildContext context) {
-    return BlocBuilder<AppBloc, AppState>(
-      builder: (context, state) {
-        if (state is AppLoaded) {
-          final user = state.currentUser;
-          final userFunds = state.userFunds;
-          
-          if (user == null) {
-            return _buildBasicHeader();
-          }
+    return BlocBuilder<ThemeBloc, ThemeState>(
+      builder: (context, themeState) {
+        return BlocBuilder<AppBloc, AppState>(
+          builder: (context, state) {
+            if (state is AppLoaded) {
+              final user = state.currentUser;
+              final userFunds = state.userFunds;
+              
+              if (user == null) {
+                return _buildBasicHeader();
+              }
 
-          return _buildUserHeader(user, userFunds);
-        }
-        return _buildBasicHeader();
+              return _buildUserHeader(user, userFunds);
+            }
+            return _buildBasicHeader();
+          },
+        );
       },
     );
   }
@@ -56,7 +61,7 @@ class _UserHeaderState extends State<UserHeader> {
           ),
         ),
       ),
-      backgroundColor: Theme.of(context).primaryColor,
+      backgroundColor: Theme.of(context).appBarTheme.backgroundColor,
       foregroundColor: Colors.white,
       actions: widget.actions,
     );

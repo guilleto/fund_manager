@@ -3,6 +3,7 @@ import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
 import 'package:fund_manager/core/blocs/app_bloc.dart';
+import 'package:fund_manager/core/blocs/theme_bloc.dart';
 import 'package:fund_manager/core/navigation/app_router.dart';
 
 class NavigationSidebar extends StatelessWidget {
@@ -10,16 +11,20 @@ class NavigationSidebar extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Drawer(
-      child: Column(
-        children: [
-          _buildHeader(context),
-          Expanded(
-            child: _buildNavigationItems(context),
+    return BlocBuilder<ThemeBloc, ThemeState>(
+      builder: (context, themeState) {
+        return Drawer(
+          child: Column(
+            children: [
+              _buildHeader(context),
+              Expanded(
+                child: _buildNavigationItems(context),
+              ),
+              _buildFooter(context),
+            ],
           ),
-          _buildFooter(context),
-        ],
-      ),
+        );
+      },
     );
   }
 
@@ -140,7 +145,7 @@ class NavigationSidebar extends StatelessWidget {
           icon: Icons.settings,
           title: 'Configuración',
           subtitle: 'Preferencias',
-          route: AppRoute.dashboard, // Por ahora va al dashboard
+          route: AppRoute.settings,
         ),
       ],
     );
