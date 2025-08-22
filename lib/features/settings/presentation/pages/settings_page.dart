@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:flutter_screenutil/flutter_screenutil.dart';
+
 import 'package:fund_manager/core/widgets/app_scaffold.dart';
 import 'package:fund_manager/core/widgets/custom_button.dart';
 import 'package:fund_manager/core/widgets/custom_text_field.dart';
@@ -89,27 +89,27 @@ class _SettingsPageState extends State<SettingsPage> {
                 children: [
                   Icon(
                     Icons.error_outline,
-                    size: 64.sp,
+                    size: 64.0,
                     color: Colors.red,
                   ),
-                  SizedBox(height: 16.h),
+                  SizedBox(height: 16.0),
                   Text(
                     'Error al cargar configuración',
                     style: TextStyle(
-                      fontSize: 18.sp,
+                      fontSize: 18.0,
                       fontWeight: FontWeight.w600,
                     ),
                   ),
-                  SizedBox(height: 8.h),
+                  SizedBox(height: 8.0),
                   Text(
                     state.message,
                     textAlign: TextAlign.center,
                     style: TextStyle(
-                      fontSize: 14.sp,
+                      fontSize: 14.0,
                       color: Colors.grey[600],
                     ),
                   ),
-                  SizedBox(height: 16.h),
+                  SizedBox(height: 16.0),
                   CustomButton(
                     onPressed: () {
                       context.read<SettingsBloc>().add(const SettingsLoadUser());
@@ -125,24 +125,24 @@ class _SettingsPageState extends State<SettingsPage> {
             return LoadingOverlay(
               isLoading: state is SettingsSaving,
               child: SingleChildScrollView(
-                padding: EdgeInsets.all(16.w),
+                padding: EdgeInsets.all(16.0),
                 child: Form(
                   key: _formKey,
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       _buildSectionHeader('Información Personal'),
-                      SizedBox(height: 16.h),
+                      SizedBox(height: 16.0),
                       _buildNameField(state),
-                      SizedBox(height: 16.h),
+                      SizedBox(height: 16.0),
                       _buildEmailField(state),
-                      SizedBox(height: 16.h),
+                      SizedBox(height: 16.0),
                       _buildPhoneField(state),
-                      SizedBox(height: 32.h),
+                      SizedBox(height: 32.0),
                       _buildSectionHeader('Preferencias'),
-                      SizedBox(height: 16.h),
+                      SizedBox(height: 16.0),
                       _buildThemeToggle(),
-                      SizedBox(height: 32.h),
+                      SizedBox(height: 32.0),
                       _buildSaveButton(state),
                     ],
                   ),
@@ -161,7 +161,7 @@ class _SettingsPageState extends State<SettingsPage> {
     return Text(
       title,
       style: TextStyle(
-        fontSize: 18.sp,
+        fontSize: 18.0,
         fontWeight: FontWeight.w600,
         color: Theme.of(context).primaryColor,
       ),
@@ -250,10 +250,10 @@ class _SettingsPageState extends State<SettingsPage> {
 
   Widget _buildThemeToggle() {
     return Container(
-      padding: EdgeInsets.all(16.w),
+      padding: EdgeInsets.all(16.0),
       decoration: BoxDecoration(
         color: Colors.grey[50],
-        borderRadius: BorderRadius.circular(12.r),
+        borderRadius: BorderRadius.circular(12.0),
         border: Border.all(color: Colors.grey[300]!),
       ),
       child: Row(
@@ -261,9 +261,9 @@ class _SettingsPageState extends State<SettingsPage> {
           Icon(
             _isDarkMode ? Icons.dark_mode : Icons.light_mode,
             color: Theme.of(context).primaryColor,
-            size: 24.sp,
+            size: 24.0,
           ),
-          SizedBox(width: 12.w),
+          SizedBox(width: 12.0),
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
@@ -271,14 +271,14 @@ class _SettingsPageState extends State<SettingsPage> {
                 Text(
                   'Modo oscuro',
                   style: TextStyle(
-                    fontSize: 16.sp,
+                    fontSize: 16.0,
                     fontWeight: FontWeight.w500,
                   ),
                 ),
                 Text(
                   _isDarkMode ? 'Activado' : 'Desactivado',
                   style: TextStyle(
-                    fontSize: 14.sp,
+                    fontSize: 14.0,
                     color: Colors.grey[600],
                   ),
                 ),

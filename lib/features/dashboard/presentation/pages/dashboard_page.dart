@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_screenutil/flutter_screenutil.dart';
+
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:fl_chart/fl_chart.dart';
 
@@ -80,22 +80,22 @@ class _DashboardViewState extends State<DashboardView> {
 
   Widget _buildMobileLayout(BuildContext context, DashboardLoaded state) {
     return SingleChildScrollView(
-      padding: EdgeInsets.all(16.w),
+      padding: EdgeInsets.all(16.0),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           _buildWelcomeCard(context, state),
-          SizedBox(height: 20.h),
+          SizedBox(height: 20.0),
           _buildUserBalanceCard(state),
-          SizedBox(height: 20.h),
+          SizedBox(height: 20.0),
           _buildMainStatsGrid(state.stats),
-          SizedBox(height: 20.h),
+          SizedBox(height: 20.0),
           _buildTransactionSummaryCard(state.stats.transactionSummary),
-          SizedBox(height: 20.h),
+          SizedBox(height: 20.0),
           _buildTopFundsCard(state.stats.topFunds),
-          SizedBox(height: 20.h),
+          SizedBox(height: 20.0),
           _buildBalanceChartCard(state.stats.balanceHistory),
-          SizedBox(height: 20.h),
+          SizedBox(height: 20.0),
           _buildRecentActivity(state.recentActivity),
         ],
       ),
@@ -104,13 +104,13 @@ class _DashboardViewState extends State<DashboardView> {
 
   Widget _buildTabletLayout(BuildContext context, DashboardLoaded state) {
     return Padding(
-      padding: EdgeInsets.all(20.w),
+      padding: EdgeInsets.all(20.0),
       child: Column(
         children: [
           _buildWelcomeCard(context, state),
-          SizedBox(height: 20.h),
+          SizedBox(height: 20.0),
           _buildUserBalanceCard(state),
-          SizedBox(height: 20.h),
+          SizedBox(height: 20.0),
           Expanded(
             child: Row(
               crossAxisAlignment: CrossAxisAlignment.start,
@@ -121,17 +121,17 @@ class _DashboardViewState extends State<DashboardView> {
                     child: Column(
                       children: [
                         _buildMainStatsGrid(state.stats),
-                        SizedBox(height: 20.h),
+                        SizedBox(height: 20.0),
                         _buildTransactionSummaryCard(state.stats.transactionSummary),
-                        SizedBox(height: 20.h),
+                        SizedBox(height: 20.0),
                         _buildTopFundsCard(state.stats.topFunds),
-                        SizedBox(height: 20.h),
+                        SizedBox(height: 20.0),
                         _buildBalanceChartCard(state.stats.balanceHistory),
                       ],
                     ),
                   ),
                 ),
-                SizedBox(width: 20.w),
+                SizedBox(width: 20.0),
                 Expanded(
                   flex: 1,
                   child: _buildRecentActivity(state.recentActivity),
@@ -146,11 +146,11 @@ class _DashboardViewState extends State<DashboardView> {
 
   Widget _buildDesktopLayout(BuildContext context, DashboardLoaded state) {
     return Padding(
-      padding: EdgeInsets.all(24.w),
+      padding: EdgeInsets.all(24.0),
       child: Column(
         children: [
           _buildWelcomeCard(context, state),
-          SizedBox(height: 24.h),
+          SizedBox(height: 24.0),
           
           Expanded(
             child: Row(
@@ -162,15 +162,15 @@ class _DashboardViewState extends State<DashboardView> {
                     child: Column(
                       children: [
                         _buildMainStatsGrid(state.stats),
-                        SizedBox(height: 24.h),
+                        SizedBox(height: 24.0),
                         Row(
                           children: [
                             Expanded(child: _buildTransactionSummaryCard(state.stats.transactionSummary)),
-                            SizedBox(width: 24.w),
+                            SizedBox(width: 24.0),
                             Expanded(child: _buildTopFundsCard(state.stats.topFunds)),
                           ],
                         ),
-                        SizedBox(height: 24.h),
+                        SizedBox(height: 24.0),
                         _buildBalanceChartCard(state.stats.balanceHistory),
                       ],
                     ),
@@ -181,12 +181,12 @@ class _DashboardViewState extends State<DashboardView> {
                   child: Column(
                   children: [
                     _buildUserBalanceCard(state),
-                    SizedBox(height: 24.h),
+                    SizedBox(height: 24.0),
                   _buildRecentActivity(state.recentActivity),
                   ],
                 ),
                 ),
-                SizedBox(width: 24.w),
+                SizedBox(width: 24.0),
               ],
             ),
           ),
@@ -201,22 +201,22 @@ class _DashboardViewState extends State<DashboardView> {
     return Card(
       elevation: 4,
       child: Padding(
-        padding: EdgeInsets.all(20.w),
+        padding: EdgeInsets.all(20.0),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Row(
               children: [
                 CircleAvatar(
-                  radius: 24.r,
+                  radius: 24.0,
                   backgroundColor: Theme.of(context).primaryColor.withOpacity(0.1),
                   child: Icon(
                     Icons.person,
-                    size: 24.sp,
+                    size: 24.0,
                     color: Theme.of(context).primaryColor,
                   ),
                 ),
-                SizedBox(width: 16.w),
+                SizedBox(width: 16.0),
                 Expanded(
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
@@ -224,16 +224,16 @@ class _DashboardViewState extends State<DashboardView> {
                       Text(
                         hasData ? '¡Bienvenido de vuelta!' : '¡Bienvenido a Fund Manager!',
                         style: TextStyle(
-                          fontSize: 22.sp,
+                          fontSize: 22.0,
                           fontWeight: FontWeight.bold,
                         ),
                       ),
                       if (state.currentUser != null) ...[
-                        SizedBox(height: 4.h),
+                        SizedBox(height: 4.0),
                         Text(
                           state.currentUser!.name,
                           style: TextStyle(
-                            fontSize: 16.sp,
+                            fontSize: 16.0,
                             color: Colors.grey[600],
                           ),
                         ),
@@ -243,19 +243,19 @@ class _DashboardViewState extends State<DashboardView> {
                 ),
               ],
             ),
-            SizedBox(height: 12.h),
+            SizedBox(height: 12.0),
             Text(
               hasData 
                   ? 'Aquí tienes un resumen completo de tus inversiones y rendimiento.'
                   : 'Comienza tu viaje de inversión explorando los fondos disponibles.',
               style: TextStyle(
-                fontSize: 14.sp,
+                fontSize: 14.0,
                 color: Colors.grey[600],
                 height: 1.4,
               ),
             ),
             if (!hasData) ...[
-              SizedBox(height: 16.h),
+              SizedBox(height: 16.0),
               Row(
                 children: [
                   Expanded(
@@ -287,7 +287,7 @@ class _DashboardViewState extends State<DashboardView> {
       builder: (context) => Card(
         elevation: 3,
         child: Padding(
-          padding: EdgeInsets.all(20.w),
+          padding: EdgeInsets.all(20.0),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
@@ -295,20 +295,20 @@ class _DashboardViewState extends State<DashboardView> {
                 children: [
                   Icon(
                     Icons.account_balance_wallet,
-                    size: 24.sp,
+                    size: 24.0,
                     color: Theme.of(context).primaryColor,
                   ),
-                  SizedBox(width: 12.w),
+                  SizedBox(width: 12.0),
                   Text(
                     'Saldo Actual',
                     style: TextStyle(
-                      fontSize: 18.sp,
+                      fontSize: 18.0,
                       fontWeight: FontWeight.bold,
                     ),
                   ),
                 ],
               ),
-              SizedBox(height: 16.h),
+              SizedBox(height: 16.0),
               Row(
                 children: [
                   Expanded(
@@ -318,12 +318,12 @@ class _DashboardViewState extends State<DashboardView> {
                         Text(
                           '\$${FormatUtils.formatAmount(state.stats.userBalance)}',
                           style: TextStyle(
-                            fontSize: 28.sp,
+                            fontSize: 28.0,
                             fontWeight: FontWeight.bold,
                             color: Theme.of(context).primaryColor,
                           ),
                         ),
-                        SizedBox(height: 8.h),
+                        SizedBox(height: 8.0),
                         if (hasData) ...[
                           Row(
                             children: [
@@ -331,16 +331,16 @@ class _DashboardViewState extends State<DashboardView> {
                                 state.stats.monthlyGrowth >= 0 
                                     ? Icons.trending_up 
                                     : Icons.trending_down,
-                                size: 16.sp,
+                                size: 16.0,
                                 color: state.stats.monthlyGrowth >= 0 
                                     ? Colors.green 
                                     : Colors.red,
                               ),
-                              SizedBox(width: 4.w),
+                              SizedBox(width: 4.0),
                               Text(
                                 '${state.stats.monthlyGrowth >= 0 ? '+' : ''}${state.stats.monthlyGrowth.toStringAsFixed(1)}% este mes',
                                 style: TextStyle(
-                                  fontSize: 14.sp,
+                                  fontSize: 14.0,
                                   color: state.stats.monthlyGrowth >= 0 
                                       ? Colors.green 
                                       : Colors.red,
@@ -353,7 +353,7 @@ class _DashboardViewState extends State<DashboardView> {
                           Text(
                             'Saldo disponible para inversiones',
                             style: TextStyle(
-                              fontSize: 14.sp,
+                              fontSize: 14.0,
                               color: Colors.grey[600],
                             ),
                           ),
@@ -363,17 +363,17 @@ class _DashboardViewState extends State<DashboardView> {
                   ),
                   if (hasData) ...[
                     Container(
-                      padding: EdgeInsets.all(12.w),
+                      padding: EdgeInsets.all(12.0),
                       decoration: BoxDecoration(
                         color: Colors.green.withOpacity(0.1),
-                        borderRadius: BorderRadius.circular(12.r),
+                        borderRadius: BorderRadius.circular(12.0),
                       ),
                       child: Column(
                         children: [
                           Text(
                             '\$${FormatUtils.formatAmount(state.stats.totalGains)}',
                             style: TextStyle(
-                              fontSize: 16.sp,
+                              fontSize: 16.0,
                               fontWeight: FontWeight.bold,
                               color: Colors.green,
                             ),
@@ -381,7 +381,7 @@ class _DashboardViewState extends State<DashboardView> {
                           Text(
                             'Ganancias Totales',
                             style: TextStyle(
-                              fontSize: 12.sp,
+                              fontSize: 12.0,
                               color: Colors.green[700],
                             ),
                           ),
@@ -407,18 +407,18 @@ class _DashboardViewState extends State<DashboardView> {
         Text(
           hasData ? 'Resumen de Inversiones' : 'Tu Cuenta',
           style: TextStyle(
-            fontSize: 18.sp,
+            fontSize: 18.0,
             fontWeight: FontWeight.bold,
           ),
         ),
-        SizedBox(height: 16.h),
+        SizedBox(height: 16.0),
         if (hasData) ...[
           GridView.count(
             shrinkWrap: true,
             physics: const NeverScrollableScrollPhysics(),
             crossAxisCount: 2,
-            crossAxisSpacing: 12.w,
-            mainAxisSpacing: 12.h,
+            crossAxisSpacing: 12.0,
+            mainAxisSpacing: 12.0,
             childAspectRatio: 1.5,
             children: [
               _buildStatCard(
@@ -458,29 +458,29 @@ class _DashboardViewState extends State<DashboardView> {
     return Card(
       elevation: 2,
       child: Padding(
-        padding: EdgeInsets.all(12.w),
+        padding: EdgeInsets.all(12.0),
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
             Icon(
               icon,
-              size: 28.sp,
+              size: 28.0,
               color: color,
             ),
-            SizedBox(height: 6.h),
+            SizedBox(height: 6.0),
             Text(
               value,
               style: TextStyle(
-                fontSize: 16.sp,
+                fontSize: 16.0,
                 fontWeight: FontWeight.bold,
               ),
               textAlign: TextAlign.center,
             ),
-            SizedBox(height: 4.h),
+            SizedBox(height: 4.0),
             Text(
               title,
               style: TextStyle(
-                fontSize: 11.sp,
+                fontSize: 11.0,
                 color: Colors.grey[600],
                 height: 1.2,
               ),
@@ -499,33 +499,33 @@ class _DashboardViewState extends State<DashboardView> {
       builder: (context) => Card(
         elevation: 2,
         child: Padding(
-          padding: EdgeInsets.all(24.w),
+          padding: EdgeInsets.all(24.0),
           child: Column(
             children: [
               Icon(
                 Icons.account_balance_wallet,
-                size: 48.sp,
+                size: 48.0,
                 color: Colors.grey[400],
               ),
-              SizedBox(height: 16.h),
+              SizedBox(height: 16.0),
               Text(
                 'No tienes fondos activos',
                 style: TextStyle(
-                  fontSize: 16.sp,
+                  fontSize: 16.0,
                   fontWeight: FontWeight.w600,
                   color: Colors.grey[700],
                 ),
               ),
-              SizedBox(height: 8.h),
+              SizedBox(height: 8.0),
               Text(
                 'Comienza invirtiendo en uno de nuestros fondos disponibles',
                 style: TextStyle(
-                  fontSize: 14.sp,
+                  fontSize: 14.0,
                   color: Colors.grey[600],
                 ),
                 textAlign: TextAlign.center,
               ),
-              SizedBox(height: 16.h),
+              SizedBox(height: 16.0),
               ElevatedButton.icon(
                 onPressed: () {
                   context.read<AppBloc>().add(const AppNavigateTo(AppRoute.funds));
@@ -549,7 +549,7 @@ class _DashboardViewState extends State<DashboardView> {
       builder: (context) => Card(
         elevation: 2,
         child: Padding(
-          padding: EdgeInsets.all(16.w),
+          padding: EdgeInsets.all(16.0),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
@@ -557,25 +557,25 @@ class _DashboardViewState extends State<DashboardView> {
                 children: [
                   Icon(
                     Icons.receipt_long,
-                    size: 20.sp,
+                    size: 20.0,
                     color: Theme.of(context).primaryColor,
                   ),
-                  SizedBox(width: 8.w),
+                  SizedBox(width: 8.0),
                   Text(
                     'Resumen de Transacciones',
                     style: TextStyle(
-                      fontSize: 16.sp,
+                      fontSize: 16.0,
                       fontWeight: FontWeight.bold,
                     ),
                   ),
                 ],
               ),
-              SizedBox(height: 16.h),
+              SizedBox(height: 16.0),
               _buildTransactionRow('Total Transacciones', '${summary.totalTransactions}'),
               _buildTransactionRow('Suscripciones', '${summary.subscriptions}'),
               _buildTransactionRow('Cancelaciones', '${summary.cancellations}'),
               _buildTransactionRow('Rendimientos', '${summary.performanceTransactions}'),
-              Divider(height: 16.h),
+              Divider(height: 16.0),
               _buildTransactionRow(
                 'Total Invertido', 
                 '\$${FormatUtils.formatAmount(summary.totalInvested)}',
@@ -601,21 +601,21 @@ class _DashboardViewState extends State<DashboardView> {
   Widget _buildTransactionRow(String label, String value, {bool isAmount = false}) {
     return Builder(
       builder: (context) => Padding(
-        padding: EdgeInsets.symmetric(vertical: 4.h),
+        padding: EdgeInsets.symmetric(vertical: 4.0),
         child: Row(
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
             Text(
               label,
               style: TextStyle(
-                fontSize: 13.sp,
+                fontSize: 13.0,
                 color: Colors.grey[600],
               ),
             ),
             Text(
               value,
               style: TextStyle(
-                fontSize: 13.sp,
+                fontSize: 13.0,
                 fontWeight: isAmount ? FontWeight.w600 : FontWeight.w500,
                 color: isAmount ? Theme.of(context).primaryColor : Colors.black87,
               ),
@@ -631,7 +631,7 @@ class _DashboardViewState extends State<DashboardView> {
       builder: (context) => Card(
         elevation: 2,
         child: Padding(
-          padding: EdgeInsets.all(16.w),
+          padding: EdgeInsets.all(16.0),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
@@ -639,20 +639,20 @@ class _DashboardViewState extends State<DashboardView> {
                 children: [
                   Icon(
                     Icons.emoji_events,
-                    size: 20.sp,
+                    size: 20.0,
                     color: Theme.of(context).primaryColor,
                   ),
-                  SizedBox(width: 8.w),
+                  SizedBox(width: 8.0),
                   Text(
                     'Top Fondos por Retiros',
                     style: TextStyle(
-                      fontSize: 16.sp,
+                      fontSize: 16.0,
                       fontWeight: FontWeight.bold,
                     ),
                   ),
                 ],
               ),
-              SizedBox(height: 16.h),
+              SizedBox(height: 16.0),
               if (topFunds.isNotEmpty) ...[
                 ...topFunds.asMap().entries.map((entry) {
                   final index = entry.key;
@@ -662,19 +662,19 @@ class _DashboardViewState extends State<DashboardView> {
               ] else ...[
                 Center(
                   child: Padding(
-                    padding: EdgeInsets.all(20.w),
+                    padding: EdgeInsets.all(20.0),
                     child: Column(
                       children: [
                         Icon(
                           Icons.emoji_events_outlined,
-                          size: 48.sp,
+                          size: 48.0,
                           color: Colors.grey[400],
                         ),
-                        SizedBox(height: 8.h),
+                        SizedBox(height: 8.0),
                         Text(
                           'No hay fondos para mostrar',
                           style: TextStyle(
-                            fontSize: 14.sp,
+                            fontSize: 14.0,
                             color: Colors.grey[600],
                           ),
                         ),
@@ -700,12 +700,12 @@ class _DashboardViewState extends State<DashboardView> {
     ];
 
     return Padding(
-      padding: EdgeInsets.symmetric(vertical: 8.h),
+      padding: EdgeInsets.symmetric(vertical: 8.0),
       child: Row(
         children: [
           Container(
-            width: 24.w,
-            height: 24.h,
+            width: 24.0,
+            height: 24.0,
             decoration: BoxDecoration(
               color: rankColors[rank - 1],
               shape: BoxShape.circle,
@@ -714,14 +714,14 @@ class _DashboardViewState extends State<DashboardView> {
               child: Text(
                 '$rank',
                 style: TextStyle(
-                  fontSize: 12.sp,
+                  fontSize: 12.0,
                   fontWeight: FontWeight.bold,
                   color: Colors.white,
                 ),
               ),
             ),
           ),
-          SizedBox(width: 12.w),
+          SizedBox(width: 12.0),
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
@@ -729,7 +729,7 @@ class _DashboardViewState extends State<DashboardView> {
                 Text(
                   fund.fundName,
                   style: TextStyle(
-                    fontSize: 14.sp,
+                    fontSize: 14.0,
                     fontWeight: FontWeight.w600,
                   ),
                   maxLines: 1,
@@ -738,7 +738,7 @@ class _DashboardViewState extends State<DashboardView> {
                 Text(
                   fund.category,
                   style: TextStyle(
-                    fontSize: 12.sp,
+                    fontSize: 12.0,
                     color: Colors.grey[600],
                   ),
                 ),
@@ -751,7 +751,7 @@ class _DashboardViewState extends State<DashboardView> {
               Text(
                 '\$${FormatUtils.formatAmount(fund.currentValue)}',
                 style: TextStyle(
-                  fontSize: 14.sp,
+                  fontSize: 14.0,
                   fontWeight: FontWeight.bold,
                   color: Theme.of(context).primaryColor,
                 ),
@@ -759,7 +759,7 @@ class _DashboardViewState extends State<DashboardView> {
               Text(
                 'Retirado',
                 style: TextStyle(
-                  fontSize: 12.sp,
+                  fontSize: 12.0,
                   color: Colors.grey[600],
                 ),
               ),
@@ -775,7 +775,7 @@ class _DashboardViewState extends State<DashboardView> {
       builder: (context) => Card(
         elevation: 2,
         child: Padding(
-          padding: EdgeInsets.all(16.w),
+          padding: EdgeInsets.all(16.0),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
@@ -783,31 +783,31 @@ class _DashboardViewState extends State<DashboardView> {
                 children: [
                   Icon(
                     Icons.account_balance_wallet,
-                    size: 20.sp,
+                    size: 20.0,
                     color: Theme.of(context).primaryColor,
                   ),
-                  SizedBox(width: 8.w),
+                  SizedBox(width: 8.0),
                   Text(
                     'Evolución del Saldo Disponible',
                     style: TextStyle(
-                      fontSize: 16.sp,
+                      fontSize: 16.0,
                       fontWeight: FontWeight.bold,
                     ),
                   ),
                 ],
               ),
-              SizedBox(height: 8.h),
+              SizedBox(height: 8.0),
               Text(
                 'Saldo disponible para inversiones a lo largo del tiempo',
                 style: TextStyle(
-                  fontSize: 12.sp,
+                  fontSize: 12.0,
                   color: Colors.grey[600],
                 ),
               ),
-              SizedBox(height: 16.h),
+              SizedBox(height: 16.0),
               if (balanceHistory.isNotEmpty) ...[
                 SizedBox(
-                  height: 200.h,
+                  height: 200.0,
                   child: LineChart(
                     LineChartData(
                       gridData: const FlGridData(show: true),
@@ -815,11 +815,11 @@ class _DashboardViewState extends State<DashboardView> {
                         leftTitles: AxisTitles(
                           sideTitles: SideTitles(
                             showTitles: true,
-                            reservedSize: 60.w,
+                            reservedSize: 60.0,
                             getTitlesWidget: (value, meta) {
                               return Text(
                                 '\$${(value / 1000).toStringAsFixed(0)}K',
-                                style: TextStyle(fontSize: 10.sp),
+                                style: TextStyle(fontSize: 10.0),
                               );
                             },
                           ),
@@ -827,13 +827,13 @@ class _DashboardViewState extends State<DashboardView> {
                         bottomTitles: AxisTitles(
                           sideTitles: SideTitles(
                             showTitles: true,
-                            reservedSize: 30.h,
+                            reservedSize: 30.0,
                             getTitlesWidget: (value, meta) {
                               if (value.toInt() >= 0 && value.toInt() < balanceHistory.length) {
                                 final date = balanceHistory[value.toInt()].date;
                                 return Text(
                                   '${date.month}/${date.day}',
-                                  style: TextStyle(fontSize: 10.sp),
+                                  style: TextStyle(fontSize: 10.0),
                                 );
                               }
                               return const Text('');
@@ -874,7 +874,7 @@ class _DashboardViewState extends State<DashboardView> {
                         touchTooltipData: LineTouchTooltipData(
                           tooltipBgColor: Colors.white,
                           tooltipRoundedRadius: 8,
-                          tooltipPadding: EdgeInsets.all(8.w),
+                          tooltipPadding: EdgeInsets.all(8.0),
                           tooltipMargin: 8,
                           getTooltipItems: (touchedSpots) {
                             return touchedSpots.map((touchedSpot) {
@@ -896,7 +896,7 @@ class _DashboardViewState extends State<DashboardView> {
                                 return LineTooltipItem(
                                   '${history.date.day}/${history.date.month}/${history.date.year}\n',
                                   TextStyle(
-                                    fontSize: 12.sp,
+                                    fontSize: 12.0,
                                     fontWeight: FontWeight.bold,
                                     color: Colors.black87,
                                   ),
@@ -904,14 +904,14 @@ class _DashboardViewState extends State<DashboardView> {
                                     TextSpan(
                                       text: 'Saldo: \$${FormatUtils.formatAmount(history.balance)}\n',
                                       style: TextStyle(
-                                        fontSize: 11.sp,
+                                        fontSize: 11.0,
                                         color: Colors.black87,
                                       ),
                                     ),
                                     TextSpan(
                                       text: 'Cambio: $changeText',
                                       style: TextStyle(
-                                        fontSize: 11.sp,
+                                        fontSize: 11.0,
                                         color: changeColor,
                                         fontWeight: FontWeight.w500,
                                       ),
@@ -927,23 +927,23 @@ class _DashboardViewState extends State<DashboardView> {
                     ),
                   ),
                 ),
-                SizedBox(height: 12.h),
+                SizedBox(height: 12.0),
                 // Leyenda de la gráfica
                 Row(
                   children: [
                     Container(
-                      width: 12.w,
-                      height: 12.h,
+                      width: 12.0,
+                      height: 12.0,
                       decoration: BoxDecoration(
                         color: Theme.of(context).primaryColor,
                         shape: BoxShape.circle,
                       ),
                     ),
-                    SizedBox(width: 8.w),
+                    SizedBox(width: 8.0),
                     Text(
                       'Saldo disponible',
                       style: TextStyle(
-                        fontSize: 12.sp,
+                        fontSize: 12.0,
                         color: Colors.grey[600],
                       ),
                     ),
@@ -951,7 +951,7 @@ class _DashboardViewState extends State<DashboardView> {
                     Text(
                       'Puntos: ${balanceHistory.length}',
                       style: TextStyle(
-                        fontSize: 12.sp,
+                        fontSize: 12.0,
                         color: Colors.grey[500],
                       ),
                     ),
@@ -960,27 +960,27 @@ class _DashboardViewState extends State<DashboardView> {
               ] else ...[
                 Center(
                   child: Padding(
-                    padding: EdgeInsets.all(20.w),
+                    padding: EdgeInsets.all(20.0),
                     child: Column(
                       children: [
                         Icon(
                           Icons.account_balance_wallet_outlined,
-                          size: 48.sp,
+                          size: 48.0,
                           color: Colors.grey[400],
                         ),
-                        SizedBox(height: 8.h),
+                        SizedBox(height: 8.0),
                         Text(
                           'No hay datos para mostrar',
                           style: TextStyle(
-                            fontSize: 14.sp,
+                            fontSize: 14.0,
                             color: Colors.grey[600],
                           ),
                         ),
-                        SizedBox(height: 4.h),
+                        SizedBox(height: 4.0),
                         Text(
                           'Realiza transacciones para ver la evolución',
                           style: TextStyle(
-                            fontSize: 12.sp,
+                            fontSize: 12.0,
                             color: Colors.grey[500],
                           ),
                         ),
@@ -1007,15 +1007,15 @@ class _DashboardViewState extends State<DashboardView> {
         Text(
           hasRealActivity ? 'Actividad Reciente' : 'Fondo Recomendado',
           style: TextStyle(
-            fontSize: 18.sp,
+            fontSize: 18.0,
             fontWeight: FontWeight.bold,
           ),
         ),
-        SizedBox(height: 16.h),
+        SizedBox(height: 16.0),
         Card(
           elevation: 2,
           child: Padding(
-            padding: EdgeInsets.all(16.w),
+            padding: EdgeInsets.all(16.0),
             child: Column(
               children: activities.map((activity) {
                 return Column(
@@ -1049,24 +1049,24 @@ class _DashboardViewState extends State<DashboardView> {
     
     return Builder(
       builder: (context) => Padding(
-        padding: EdgeInsets.symmetric(vertical: 10.h),
+        padding: EdgeInsets.symmetric(vertical: 10.0),
         child: Column(
           children: [
             Row(
               children: [
                 Container(
-                  padding: EdgeInsets.all(8.w),
+                  padding: EdgeInsets.all(8.0),
                   decoration: BoxDecoration(
                     color: color.withOpacity(0.1),
-                    borderRadius: BorderRadius.circular(8.r),
+                    borderRadius: BorderRadius.circular(8.0),
                   ),
                   child: Icon(
                     icon,
-                    size: 18.sp,
+                    size: 18.0,
                     color: color,
                   ),
                 ),
-                SizedBox(width: 12.w),
+                SizedBox(width: 12.0),
                 Expanded(
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
@@ -1074,15 +1074,15 @@ class _DashboardViewState extends State<DashboardView> {
                       Text(
                         title,
                         style: TextStyle(
-                          fontSize: 13.sp,
+                          fontSize: 13.0,
                           fontWeight: FontWeight.w500,
                         ),
                       ),
-                      SizedBox(height: 2.h),
+                      SizedBox(height: 2.0),
                       Text(
                         subtitle,
                         style: TextStyle(
-                          fontSize: 11.sp,
+                          fontSize: 11.0,
                           color: Colors.grey[600],
                         ),
                       ),
@@ -1092,14 +1092,14 @@ class _DashboardViewState extends State<DashboardView> {
                 Text(
                   time,
                   style: TextStyle(
-                    fontSize: 10.sp,
+                    fontSize: 10.0,
                     color: Colors.grey[500],
                   ),
                 ),
               ],
             ),
             if (isRecommendedFund) ...[
-              SizedBox(height: 12.h),
+              SizedBox(height: 12.0),
               Row(
                 children: [
                   Expanded(
@@ -1110,11 +1110,11 @@ class _DashboardViewState extends State<DashboardView> {
                       style: ElevatedButton.styleFrom(
                         backgroundColor: Theme.of(context).primaryColor,
                         foregroundColor: Colors.white,
-                        padding: EdgeInsets.symmetric(vertical: 8.h),
+                        padding: EdgeInsets.symmetric(vertical: 8.0),
                       ),
                       child: Text(
                         'Ver Detalles',
-                        style: TextStyle(fontSize: 12.sp),
+                        style: TextStyle(fontSize: 12.0),
                       ),
                     ),
                   ),

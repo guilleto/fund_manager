@@ -12,29 +12,18 @@ environment:
 dependencies:
   flutter:
     sdk: flutter
-  flutter_localizations:
-    sdk: flutter
   
   # State Management
   flutter_bloc: ^8.1.4
   equatable: ^2.0.5
   
-
-  
   # HTTP Client
   dio: ^5.4.0
   
-  # JSON Serialization
-  json_annotation: ^4.8.1
-  
-  # Navigation - Using Flutter's built-in Navigator 2.0
-  
   # UI Components
-  flutter_screenutil: ^5.9.0
   fl_chart: ^0.66.2
   
   # Utils
-  dartz: ^0.10.1
   logger: ^2.0.2+1
   intl: ^0.19.0
   shared_preferences: ^2.2.2
@@ -42,25 +31,15 @@ dependencies:
 dev_dependencies:
   flutter_test:
     sdk: flutter
-  integration_test:
-    sdk: flutter
 
   flutter_lints: ^5.0.0
   
-  # Code Generation
-  build_runner: ^2.4.8
-  json_serializable: ^6.7.1
-  
   # Testing
   bloc_test: ^9.1.5
-  mockito: ^5.4.4
   mocktail: ^1.0.3
 
 flutter:
   uses-material-design: true
-
-  # Enable generation of localized Strings from arb files.
-  generate: true
 
   assets:
     # Add assets from the images directory to the application.

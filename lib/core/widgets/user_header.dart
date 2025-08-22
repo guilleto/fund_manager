@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_screenutil/flutter_screenutil.dart';
+
 import 'package:flutter_bloc/flutter_bloc.dart';
 
 import 'package:fund_manager/core/blocs/app_bloc.dart';
@@ -56,7 +56,7 @@ class _UserHeaderState extends State<UserHeader> {
         child: Text(
           widget.title,
           style: TextStyle(
-            fontSize: 18.sp,
+            fontSize: 18.0,
             fontWeight: FontWeight.bold,
           ),
         ),
@@ -87,14 +87,14 @@ class _UserHeaderState extends State<UserHeader> {
             Text(
               widget.title,
               style: TextStyle(
-                fontSize: 18.sp,
+                fontSize: 18.0,
                 fontWeight: FontWeight.bold,
               ),
             ),
             Text(
               'Hola, $firstName',
               style: TextStyle(
-                fontSize: 12.sp,
+                fontSize: 12.0,
                 fontWeight: FontWeight.w400,
                 color: Colors.white70,
               ),
@@ -123,14 +123,14 @@ class _UserHeaderState extends State<UserHeader> {
 
   Widget _buildUserChip(double balance, double totalInvested) {
     return Container(
-      margin: EdgeInsets.only(right: 8.w),
+      margin: EdgeInsets.only(right: 8.0),
       child: PopupMenuButton<String>(
-        offset: Offset(0, 50.h),
+        offset: Offset(0, 50.0),
         child: Container(
-          padding: EdgeInsets.symmetric(horizontal: 12.w, vertical: 6.h),
+          padding: EdgeInsets.symmetric(horizontal: 12.0, vertical: 6.0),
           decoration: BoxDecoration(
             color: Colors.white.withOpacity(0.1),
-            borderRadius: BorderRadius.circular(20.r),
+            borderRadius: BorderRadius.circular(20.0),
             border: Border.all(
               color: Colors.white.withOpacity(0.2),
               width: 1,
@@ -140,21 +140,21 @@ class _UserHeaderState extends State<UserHeader> {
             mainAxisSize: MainAxisSize.min,
             children: [
               CircleAvatar(
-                radius: 12.r,
+                radius: 12.0,
                 backgroundColor: Colors.white.withOpacity(0.2),
                 child: Text(
                   'G',
                   style: TextStyle(
-                    fontSize: 12.sp,
+                    fontSize: 12.0,
                     fontWeight: FontWeight.bold,
                     color: Colors.white,
                   ),
                 ),
               ),
-              SizedBox(width: 8.w),
+              SizedBox(width: 8.0),
               Icon(
                 Icons.keyboard_arrow_down,
-                size: 16.sp,
+                size: 16.0,
                 color: Colors.white70,
               ),
             ],
@@ -208,10 +208,10 @@ class _UserHeaderState extends State<UserHeader> {
       children: [
         Icon(
           icon,
-          size: 16.sp,
+          size: 16.0,
           color: color ?? Colors.grey[600],
         ),
-        SizedBox(width: 8.w),
+        SizedBox(width: 8.0),
         Expanded(
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
@@ -219,7 +219,7 @@ class _UserHeaderState extends State<UserHeader> {
               Text(
                 label,
                 style: TextStyle(
-                  fontSize: 12.sp,
+                  fontSize: 12.0,
                   color: Colors.grey[600],
                 ),
               ),
@@ -227,7 +227,7 @@ class _UserHeaderState extends State<UserHeader> {
                 Text(
                   value,
                   style: TextStyle(
-                    fontSize: 14.sp,
+                    fontSize: 14.0,
                     fontWeight: FontWeight.bold,
                     color: color ?? Colors.black87,
                   ),

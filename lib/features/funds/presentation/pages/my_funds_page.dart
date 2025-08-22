@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:flutter_screenutil/flutter_screenutil.dart';
+
 
 import 'package:fund_manager/core/widgets/responsive_widget.dart';
 import 'package:fund_manager/core/widgets/custom_button.dart';
@@ -52,23 +52,23 @@ class _MyFundsViewState extends State<MyFundsView> {
                   mainAxisSize: MainAxisSize.min,
                   children: [
                     Container(
-                      width: 8.w,
-                      height: 8.h,
+                      width: 8.0,
+                      height: 8.0,
                       decoration: BoxDecoration(
                         color: Colors.green[400],
                         shape: BoxShape.circle,
                       ),
                     ),
-                    SizedBox(width: 4.w),
+                    const SizedBox(width: 4.0),
                     Text(
                       'Actualizado cada minuto',
                       style: TextStyle(
-                        fontSize: 12.sp,
+                        fontSize: 12.0,
                         color: Colors.green[600],
                         fontWeight: FontWeight.w500,
                       ),
                     ),
-                    SizedBox(width: 8.w),
+                    const SizedBox(width: 8.0),
                   ],
                 ),
                 IconButton(
@@ -98,12 +98,12 @@ class _MyFundsViewState extends State<MyFundsView> {
 
   Widget _buildMobileLayout(BuildContext context, AppLoaded state) {
     return SingleChildScrollView(
-      padding: EdgeInsets.all(20.w),
+      padding: const EdgeInsets.all(20.0),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          _buildUserInfoCard(state.currentUser),
-          SizedBox(height: 24.h),
+          // _buildUserInfoCard(state.currentUser),
+          const SizedBox(height: 24.0),
           _buildFundsList(context, state),
         ],
       ),
@@ -112,11 +112,11 @@ class _MyFundsViewState extends State<MyFundsView> {
 
   Widget _buildTabletLayout(BuildContext context, AppLoaded state) {
     return Padding(
-      padding: EdgeInsets.all(24.w),
+      padding: const EdgeInsets.all(24.0),
       child: Column(
         children: [
           _buildUserInfoCard(state.currentUser),
-          SizedBox(height: 24.h),
+          const SizedBox(height: 24.0),
           Expanded(
             child: _buildFundsList(context, state),
           ),
@@ -127,11 +127,11 @@ class _MyFundsViewState extends State<MyFundsView> {
 
   Widget _buildDesktopLayout(BuildContext context, AppLoaded state) {
     return Padding(
-      padding: EdgeInsets.all(32.w),
+      padding: const EdgeInsets.all(32.0),
       child: Column(
         children: [
           _buildUserInfoCard(state.currentUser),
-          SizedBox(height: 32.h),
+          const SizedBox(height: 32.0),
           Expanded(
             child: _buildFundsList(context, state),
           ),
@@ -146,7 +146,7 @@ class _MyFundsViewState extends State<MyFundsView> {
     return Card(
       elevation: 4,
       child: Padding(
-        padding: EdgeInsets.all(20.w),
+        padding: const EdgeInsets.all(20.0),
         child: Column(
           children: [
             Row(
@@ -158,16 +158,16 @@ class _MyFundsViewState extends State<MyFundsView> {
                     children: [
                       Text(
                         'Hola, ${user.name}',
-                        style: TextStyle(
-                          fontSize: 20.sp,
+                        style: const TextStyle(
+                          fontSize: 20.0,
                           fontWeight: FontWeight.bold,
                         ),
                       ),
-                      SizedBox(height: 4.h),
+                      const SizedBox(height: 4.0),
                       Text(
                         user.email,
                         style: TextStyle(
-                          fontSize: 14.sp,
+                          fontSize: 14.0,
                           color: Colors.grey[600],
                         ),
                       ),
@@ -180,15 +180,15 @@ class _MyFundsViewState extends State<MyFundsView> {
                     Text(
                       'Saldo Disponible',
                       style: TextStyle(
-                        fontSize: 14.sp,
+                        fontSize: 14.0,
                         color: Colors.grey[600],
                       ),
                     ),
-                    SizedBox(height: 4.h),
+                    const SizedBox(height: 4.0),
                     Text(
                       FormatUtils.formatCurrency(user.balance),
-                      style: TextStyle(
-                        fontSize: 24.sp,
+                      style: const TextStyle(
+                        fontSize: 24.0,
                         fontWeight: FontWeight.bold,
                         color: Colors.green,
                       ),
@@ -213,28 +213,28 @@ class _MyFundsViewState extends State<MyFundsView> {
           children: [
             Icon(
               Icons.account_balance_wallet_outlined,
-              size: 64.sp,
+              size: 64.0,
               color: Colors.grey[400],
             ),
-            SizedBox(height: 16.h),
+            const SizedBox(height: 16.0),
             Text(
               'No tienes fondos suscritos',
               style: TextStyle(
-                fontSize: 18.sp,
+                fontSize: 18.0,
                 fontWeight: FontWeight.w500,
                 color: Colors.grey[600],
               ),
             ),
-            SizedBox(height: 8.h),
+            const SizedBox(height: 8.0),
             Text(
               'Explora los fondos disponibles para comenzar a invertir',
               style: TextStyle(
-                fontSize: 14.sp,
+                fontSize: 14.0,
                 color: Colors.grey[500],
               ),
               textAlign: TextAlign.center,
             ),
-            SizedBox(height: 24.h),
+            const SizedBox(height: 24.0),
             CustomButton(
               text: 'Ver Fondos',
               onPressed: () {
@@ -249,14 +249,15 @@ class _MyFundsViewState extends State<MyFundsView> {
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
+      mainAxisSize: MainAxisSize.min,
       children: [
         Row(
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
             Text(
               'Mis Fondos (${userFunds.length})',
-              style: TextStyle(
-                fontSize: 20.sp,
+              style: const TextStyle(
+                fontSize: 20.0,
                 fontWeight: FontWeight.bold,
               ),
             ),
@@ -269,9 +270,29 @@ class _MyFundsViewState extends State<MyFundsView> {
             ),
           ],
         ),
-        SizedBox(height: 16.h),
-        Expanded(
+        const SizedBox(height: 16.0),
+        ResponsiveWidget(
+          mobile: ListView.builder(
+          shrinkWrap: true,
+          physics: const NeverScrollableScrollPhysics(),
+          itemCount: userFunds.length,
+          itemBuilder: (context, index) {
+            final userFund = userFunds[index];
+            return _buildUserFundCard(context, userFund);
+          },
+        ),
+        tablet: ListView.builder(
+          shrinkWrap: true,
+          physics: const NeverScrollableScrollPhysics(),
+          itemCount: userFunds.length,
+          itemBuilder: (context, index) {
+            final userFund = userFunds[index];
+            return _buildUserFundCard(context, userFund);
+          },
+        ),
+        desktop: Expanded(
           child: ListView.builder(
+            shrinkWrap: true,
             itemCount: userFunds.length,
             itemBuilder: (context, index) {
               final userFund = userFunds[index];
@@ -279,16 +300,18 @@ class _MyFundsViewState extends State<MyFundsView> {
             },
           ),
         ),
+        )
+        
       ],
     );
   }
 
   Widget _buildUserFundCard(BuildContext context, UserFund userFund) {
     return Card(
-      margin: EdgeInsets.only(bottom: 12.h),
+      margin: const EdgeInsets.only(bottom: 12.0),
       elevation: 2,
       child: Padding(
-        padding: EdgeInsets.all(16.w),
+        padding: const EdgeInsets.all(16.0),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
@@ -301,19 +324,19 @@ class _MyFundsViewState extends State<MyFundsView> {
                     children: [
                       Text(
                         userFund.fundName,
-                        style: TextStyle(
-                          fontSize: 16.sp,
+                        style: const TextStyle(
+                          fontSize: 16.0,
                           fontWeight: FontWeight.bold,
                         ),
                         maxLines: 2,
                         overflow: TextOverflow.ellipsis,
                       ),
-                      SizedBox(height: 4.h),
+                      const SizedBox(height: 4.0),
                       Container(
-                        padding: EdgeInsets.symmetric(horizontal: 8.w, vertical: 4.h),
+                        padding: const EdgeInsets.symmetric(horizontal: 8.0, vertical: 4.0),
                         decoration: BoxDecoration(
                           color: FormatUtils.getCategoryColor(userFund.category).withOpacity(0.1),
-                          borderRadius: BorderRadius.circular(12.r),
+                          borderRadius: BorderRadius.circular(12.0),
                           border: Border.all(
                             color: FormatUtils.getCategoryColor(userFund.category).withOpacity(0.3),
                             width: 1,
@@ -322,7 +345,7 @@ class _MyFundsViewState extends State<MyFundsView> {
                         child: Text(
                           userFund.category,
                           style: TextStyle(
-                            fontSize: 12.sp,
+                            fontSize: 12.0,
                             color: FormatUtils.getCategoryColor(userFund.category),
                             fontWeight: FontWeight.w500,
                           ),
@@ -337,15 +360,15 @@ class _MyFundsViewState extends State<MyFundsView> {
                     Text(
                       'Valor Actual',
                       style: TextStyle(
-                        fontSize: 12.sp,
+                        fontSize: 12.0,
                         color: Colors.grey[600],
                       ),
                     ),
-                    SizedBox(height: 4.h),
+                    const SizedBox(height: 4.0),
                     Text(
                       FormatUtils.formatCurrency(userFund.currentValue),
-                      style: TextStyle(
-                        fontSize: 18.sp,
+                      style: const TextStyle(
+                        fontSize: 18.0,
                         fontWeight: FontWeight.bold,
                         color: Colors.green,
                       ),
@@ -354,7 +377,7 @@ class _MyFundsViewState extends State<MyFundsView> {
                 ),
               ],
             ),
-            SizedBox(height: 16.h),
+            const SizedBox(height: 16.0),
             Row(
               children: [
                 Expanded(
@@ -382,7 +405,7 @@ class _MyFundsViewState extends State<MyFundsView> {
                 ),
               ],
             ),
-            SizedBox(height: 8.h),
+            const SizedBox(height: 8.0),
             Row(
               children: [
                 Expanded(
@@ -409,7 +432,7 @@ class _MyFundsViewState extends State<MyFundsView> {
                 ),
               ],
             ),
-            SizedBox(height: 16.h),
+            const SizedBox(height: 16.0),
             Row(
               children: [
                 Expanded(
@@ -432,12 +455,12 @@ class _MyFundsViewState extends State<MyFundsView> {
   Widget _buildFundStat(String label, String value, IconData icon, {Color? color}) {
     return Column(
       children: [
-        Icon(icon, size: 20.sp, color: color ?? Colors.grey[600]),
-        SizedBox(height: 4.h),
+        Icon(icon, size: 20.0, color: color ?? Colors.grey[600]),
+        const SizedBox(height: 4.0),
         Text(
           value,
           style: TextStyle(
-            fontSize: 14.sp,
+            fontSize: 14.0,
             fontWeight: FontWeight.w600,
             color: color,
           ),
@@ -445,7 +468,7 @@ class _MyFundsViewState extends State<MyFundsView> {
         Text(
           label,
           style: TextStyle(
-            fontSize: 12.sp,
+            fontSize: 12.0,
             color: Colors.grey[600],
           ),
           textAlign: TextAlign.center,

@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
 import 'package:fund_manager/core/navigation/app_router.dart';
@@ -16,7 +15,7 @@ class NavigationBreadcrumb extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 8.h),
+      padding: EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
       decoration: BoxDecoration(
         color: Theme.of(context).colorScheme.surface,
         border: Border(
@@ -67,21 +66,21 @@ class NavigationBreadcrumb extends StatelessWidget {
   }) {
     return InkWell(
       onTap: isActive ? null : () => _navigateToRoute(context, route),
-      borderRadius: BorderRadius.circular(8.r),
+      borderRadius: BorderRadius.circular(8.0),
       child: Container(
-        padding: EdgeInsets.symmetric(horizontal: 12.w, vertical: 6.h),
+        padding: EdgeInsets.symmetric(horizontal: 12.0, vertical: 6.0),
         decoration: BoxDecoration(
           color: isActive
               ? Theme.of(context).primaryColor.withOpacity(0.1)
               : Colors.transparent,
-          borderRadius: BorderRadius.circular(8.r),
+          borderRadius: BorderRadius.circular(8.0),
         ),
         child: Row(
           mainAxisSize: MainAxisSize.min,
           children: [
             Icon(
               icon,
-              size: 16.sp,
+              size: 16.0,
               color: isActive
                   ? Theme.of(context).primaryColor
                   : Theme.of(context)
@@ -90,11 +89,11 @@ class NavigationBreadcrumb extends StatelessWidget {
                       ?.color
                       ?.withOpacity(0.7),
             ),
-            SizedBox(width: 4.w),
+            SizedBox(width: 4.0),
             Text(
               label,
               style: TextStyle(
-                fontSize: 14.sp,
+                fontSize: 14.0,
                 fontWeight: isActive ? FontWeight.w600 : FontWeight.normal,
                 color: isActive
                     ? Theme.of(context).primaryColor
@@ -113,10 +112,10 @@ class NavigationBreadcrumb extends StatelessWidget {
 
   Widget _buildSeparator(BuildContext context) {
     return Padding(
-      padding: EdgeInsets.symmetric(horizontal: 8.w),
+      padding: EdgeInsets.symmetric(horizontal: 8.0),
       child: Icon(
         Icons.chevron_right,
-        size: 16.sp,
+        size: 16.0,
         color: Theme.of(context).textTheme.bodyMedium?.color?.withOpacity(0.5),
       ),
     );

@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_screenutil/flutter_screenutil.dart';
+
 import 'package:fund_manager/core/utils/format_utils.dart';
 import 'package:fund_manager/features/funds/domain/models/user_fund.dart';
 
@@ -14,10 +14,10 @@ class SubscriptionInfoCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      padding: EdgeInsets.all(8.w),
+      padding: EdgeInsets.all(8.0),
       decoration: BoxDecoration(
         color: Colors.green.withOpacity(0.1),
-        borderRadius: BorderRadius.circular(8.r),
+        borderRadius: BorderRadius.circular(8.0),
         border: Border.all(
           color: Colors.green.withOpacity(0.3),
           width: 1,
@@ -30,21 +30,21 @@ class SubscriptionInfoCard extends StatelessWidget {
             children: [
               Icon(
                 Icons.trending_up,
-                size: 14.sp,
+                size: 14.0,
                 color: Colors.green[700],
               ),
-              SizedBox(width: 4.w),
+              SizedBox(width: 4.0),
               Text(
                 'Tu Inversión',
                 style: TextStyle(
-                  fontSize: 11.sp,
+                  fontSize: 11.0,
                   color: Colors.green[700],
                   fontWeight: FontWeight.w600,
                 ),
               ),
             ],
           ),
-          SizedBox(height: 6.h),
+          SizedBox(height: 6.0),
           Row(
             children: [
               Expanded(
@@ -63,7 +63,7 @@ class SubscriptionInfoCard extends StatelessWidget {
               ),
             ],
           ),
-          SizedBox(height: 4.h),
+          SizedBox(height: 4.0),
           Row(
             children: [
               Expanded(
@@ -82,20 +82,20 @@ class SubscriptionInfoCard extends StatelessWidget {
               ),
             ],
           ),
-          SizedBox(height: 4.h),
+          SizedBox(height: 4.0),
           Row(
             children: [
               Icon(
                 Icons.access_time,
-                size: 12.sp,
+                size: 12.0,
                 color: Colors.green[600],
               ),
-              SizedBox(width: 4.w),
+              SizedBox(width: 4.0),
               Expanded(
                 child: Text(
                   'Actualizado cada minuto - Rendimiento fijo: ${effectiveUserFund?.fixedPerformance.toStringAsFixed(2)}% por minuto',
                   style: TextStyle(
-                    fontSize: 10.sp,
+                    fontSize: 10.0,
                     color: Colors.green[600],
                     fontWeight: FontWeight.w500,
                   ),
@@ -115,16 +115,16 @@ class SubscriptionInfoCard extends StatelessWidget {
         Text(
           label,
           style: TextStyle(
-            fontSize: 9.sp,
+            fontSize: 9.0,
             color: Colors.grey[600],
             fontWeight: FontWeight.w500,
           ),
         ),
-        SizedBox(height: 2.h),
+        SizedBox(height: 2.0),
         Text(
           value,
           style: TextStyle(
-            fontSize: 11.sp,
+            fontSize: 11.0,
             fontWeight: FontWeight.bold,
             color: color,
           ),

@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_screenutil/flutter_screenutil.dart';
+
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:fl_chart/fl_chart.dart';
 
@@ -132,9 +132,9 @@ class _TransactionsViewState extends State<TransactionsView>
 
   Widget _buildFilters(BuildContext context, TransactionsLoaded state) {
     return Card(
-      margin: EdgeInsets.all(16.w),
+      margin: EdgeInsets.all(16.0),
       child: Padding(
-        padding: EdgeInsets.all(16.w),
+        padding: EdgeInsets.all(16.0),
         child: Column(
           children: [
             Row(
@@ -163,7 +163,7 @@ class _TransactionsViewState extends State<TransactionsView>
                     },
                   ),
                 ),
-                SizedBox(width: 16.w),
+                SizedBox(width: 16.0),
                 Expanded(
                   child: DropdownButtonFormField<String>(
                     value: _selectedPeriod,
@@ -190,7 +190,7 @@ class _TransactionsViewState extends State<TransactionsView>
                 ),
               ],
             ),
-            SizedBox(height: 16.h),
+            SizedBox(height: 16.0),
             TabBar(
               controller: _tabController,
               tabs: const [
@@ -212,7 +212,7 @@ class _TransactionsViewState extends State<TransactionsView>
     }
 
     return ListView.builder(
-      padding: EdgeInsets.all(16.w),
+      padding: EdgeInsets.all(16.0),
       itemCount: state.transactions.length,
       itemBuilder: (context, index) {
         final transaction = state.transactions[index];
@@ -223,7 +223,7 @@ class _TransactionsViewState extends State<TransactionsView>
 
   Widget _buildTransactionCard(Transaction transaction) {
     return Card(
-      margin: EdgeInsets.only(bottom: 12.h),
+      margin: EdgeInsets.only(bottom: 12.0),
       child: ListTile(
         leading: CircleAvatar(
           backgroundColor: transaction.type == TransactionType.subscription 
@@ -248,7 +248,7 @@ class _TransactionsViewState extends State<TransactionsView>
             ),
             Text(
               transaction.description!,
-              style: TextStyle(fontSize: 12.sp),
+              style: TextStyle(fontSize: 12.0),
             ),
           ],
         ),
@@ -266,17 +266,17 @@ class _TransactionsViewState extends State<TransactionsView>
               ),
             ),
             Container(
-              padding: EdgeInsets.symmetric(horizontal: 8.w, vertical: 4.h),
+              padding: EdgeInsets.symmetric(horizontal: 8.0, vertical: 4.0),
               decoration: BoxDecoration(
                 color: transaction.status == TransactionStatus.completed 
                     ? Colors.green.withOpacity(0.1)
                     : Colors.orange.withOpacity(0.1),
-                borderRadius: BorderRadius.circular(12.r),
+                borderRadius: BorderRadius.circular(12.0),
               ),
               child: Text(
                 transaction.status.toString().split('.').last,
                 style: TextStyle(
-                  fontSize: 10.sp,
+                  fontSize: 10.0,
                   color: transaction.status == TransactionStatus.completed 
                       ? Colors.green 
                       : Colors.orange,
@@ -309,11 +309,11 @@ class _TransactionsViewState extends State<TransactionsView>
         .length;
 
     return SingleChildScrollView(
-      padding: EdgeInsets.all(16.w),
+      padding: EdgeInsets.all(16.0),
       child: Column(
         children: [
           _buildSummaryCards(totalAmount, subscriptionCount, cancellationCount),
-          SizedBox(height: 24.h),
+          SizedBox(height: 24.0),
           _buildChart(state),
         ],
       ),
@@ -331,7 +331,7 @@ class _TransactionsViewState extends State<TransactionsView>
             Colors.blue,
           ),
         ),
-        SizedBox(width: 12.w),
+        SizedBox(width: 12.0),
         Expanded(
           child: _buildSummaryCard(
             'Suscripciones',
@@ -340,7 +340,7 @@ class _TransactionsViewState extends State<TransactionsView>
             Colors.green,
           ),
         ),
-        SizedBox(width: 12.w),
+        SizedBox(width: 12.0),
         Expanded(
           child: _buildSummaryCard(
             'Cancelaciones',
@@ -356,22 +356,22 @@ class _TransactionsViewState extends State<TransactionsView>
   Widget _buildSummaryCard(String title, String value, IconData icon, Color color) {
     return Card(
       child: Padding(
-        padding: EdgeInsets.all(16.w),
+        padding: EdgeInsets.all(16.0),
         child: Column(
           children: [
-            Icon(icon, size: 32.sp, color: color),
-            SizedBox(height: 8.h),
+            Icon(icon, size: 32.0, color: color),
+            SizedBox(height: 8.0),
             Text(
               value,
               style: TextStyle(
-                fontSize: 18.sp,
+                fontSize: 18.0,
                 fontWeight: FontWeight.bold,
               ),
             ),
             Text(
               title,
               style: TextStyle(
-                fontSize: 12.sp,
+                fontSize: 12.0,
                 color: Colors.grey[600],
               ),
             ),
@@ -385,12 +385,12 @@ class _TransactionsViewState extends State<TransactionsView>
     if (state.chartData.isEmpty) {
       return Card(
         child: Padding(
-          padding: EdgeInsets.all(16.w),
+          padding: EdgeInsets.all(16.0),
           child: Center(
             child: Text(
               'No hay datos para mostrar en el gráfico',
               style: TextStyle(
-                fontSize: 16.sp,
+                fontSize: 16.0,
                 color: Colors.grey[600],
               ),
             ),
@@ -401,23 +401,23 @@ class _TransactionsViewState extends State<TransactionsView>
 
     return Card(
       child: Padding(
-        padding: EdgeInsets.all(16.w),
+        padding: EdgeInsets.all(16.0),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Text(
               state.chartTitle,
               style: TextStyle(
-                fontSize: 16.sp,
+                fontSize: 16.0,
                 fontWeight: FontWeight.bold,
               ),
             ),
-            SizedBox(height: 8.h),
+            SizedBox(height: 8.0),
             Container(
-              padding: EdgeInsets.symmetric(horizontal: 12.w, vertical: 6.h),
+              padding: EdgeInsets.symmetric(horizontal: 12.0, vertical: 6.0),
               decoration: BoxDecoration(
                 color: Colors.blue.withOpacity(0.1),
-                borderRadius: BorderRadius.circular(8.r),
+                borderRadius: BorderRadius.circular(8.0),
                 border: Border.all(color: Colors.blue.withOpacity(0.3)),
               ),
               child: Row(
@@ -425,14 +425,14 @@ class _TransactionsViewState extends State<TransactionsView>
                 children: [
                   Icon(
                     Icons.timeline,
-                    size: 16.sp,
+                    size: 16.0,
                     color: Colors.blue,
                   ),
-                  SizedBox(width: 6.w),
+                  SizedBox(width: 6.0),
                   Text(
                     'Orden temporal: Más recientes → Más antiguos',
                     style: TextStyle(
-                      fontSize: 12.sp,
+                      fontSize: 12.0,
                       color: Colors.blue[700],
                       fontWeight: FontWeight.w500,
                     ),
@@ -440,9 +440,9 @@ class _TransactionsViewState extends State<TransactionsView>
                 ],
               ),
             ),
-            SizedBox(height: 16.h),
+            SizedBox(height: 16.0),
             SizedBox(
-              height: 200.h,
+              height: 200.0,
               child: BarChart(
                 BarChartData(
                   gridData: const FlGridData(show: true),
@@ -450,14 +450,14 @@ class _TransactionsViewState extends State<TransactionsView>
                     leftTitles: AxisTitles(
                       sideTitles: SideTitles(
                         showTitles: true,
-                        reservedSize: 50.w,
+                        reservedSize: 50.0,
                         getTitlesWidget: (value, meta) {
                           final absValue = value.abs();
                           final sign = value >= 0 ? '+' : '-';
                           return Text(
                             '$sign\$${absValue.toInt()}',
                             style: TextStyle(
-                              fontSize: 10.sp,
+                              fontSize: 10.0,
                               color: value >= 0 ? Colors.green : Colors.red,
                             ),
                           );
@@ -467,31 +467,31 @@ class _TransactionsViewState extends State<TransactionsView>
                     bottomTitles: AxisTitles(
                       sideTitles: SideTitles(
                         showTitles: true,
-                        reservedSize: 50.h,
+                        reservedSize: 50.0,
                         getTitlesWidget: (value, meta) {
                           if (value.toInt() < state.chartData.length) {
                             final dataPoint = state.chartData[value.toInt()];
                             return Padding(
-                              padding: EdgeInsets.only(top: 8.h),
+                              padding: EdgeInsets.only(top: 8.0),
                               child: Column(
                                 children: [
                                   Text(
                                     dataPoint.label,
-                                    style: TextStyle(fontSize: 8.sp),
+                                    style: TextStyle(fontSize: 8.0),
                                     textAlign: TextAlign.center,
                                   ),
                                   if (value.toInt() == 0 && state.chartData.length > 1)
                                     Container(
-                                      margin: EdgeInsets.only(top: 4.h),
-                                      padding: EdgeInsets.symmetric(horizontal: 4.w, vertical: 2.h),
+                                      margin: EdgeInsets.only(top: 4.0),
+                                      padding: EdgeInsets.symmetric(horizontal: 4.0, vertical: 2.0),
                                       decoration: BoxDecoration(
                                         color: Colors.green.withOpacity(0.2),
-                                        borderRadius: BorderRadius.circular(4.r),
+                                        borderRadius: BorderRadius.circular(4.0),
                                       ),
                                       child: Text(
                                         'MÁS RECIENTE',
                                         style: TextStyle(
-                                          fontSize: 6.sp,
+                                          fontSize: 6.0,
                                           color: Colors.green[700],
                                           fontWeight: FontWeight.bold,
                                         ),
@@ -499,16 +499,16 @@ class _TransactionsViewState extends State<TransactionsView>
                                     ),
                                   if (value.toInt() == state.chartData.length - 1  && state.chartData.length > 1)
                                     Container(
-                                      margin: EdgeInsets.only(top: 4.h),
-                                      padding: EdgeInsets.symmetric(horizontal: 4.w, vertical: 2.h),
+                                      margin: EdgeInsets.only(top: 4.0),
+                                      padding: EdgeInsets.symmetric(horizontal: 4.0, vertical: 2.0),
                                       decoration: BoxDecoration(
                                         color: Colors.orange.withOpacity(0.2),
-                                        borderRadius: BorderRadius.circular(4.r),
+                                        borderRadius: BorderRadius.circular(4.0),
                                       ),
                                       child: Text(
                                         'MÁS ANTIGUO',
                                         style: TextStyle(
-                                          fontSize: 6.sp,
+                                          fontSize: 6.0,
                                           color: Colors.orange[700],
                                           fontWeight: FontWeight.bold,
                                         ),
@@ -534,8 +534,8 @@ class _TransactionsViewState extends State<TransactionsView>
                         BarChartRodData(
                           toY: dataPoint.value,
                           color: dataPoint.isPositive ? Colors.green : Colors.red,
-                          width: 16.w,
-                          borderRadius: BorderRadius.circular(4.r),
+                          width: 16.0,
+                          borderRadius: BorderRadius.circular(4.0),
                         ),
                       ],
                     );
@@ -543,7 +543,7 @@ class _TransactionsViewState extends State<TransactionsView>
                 ),
               ),
             ),
-            SizedBox(height: 16.h),
+            SizedBox(height: 16.0),
             _buildChartLegend(state.chartData),
           ],
         ),
@@ -558,29 +558,29 @@ class _TransactionsViewState extends State<TransactionsView>
         Text(
           'Detalles:',
           style: TextStyle(
-            fontSize: 14.sp,
+            fontSize: 14.0,
             fontWeight: FontWeight.bold,
           ),
         ),
-        SizedBox(height: 8.h),
+        SizedBox(height: 8.0),
         ...chartData.take(5).map((dataPoint) => Padding(
-          padding: EdgeInsets.only(bottom: 4.h),
+          padding: EdgeInsets.only(bottom: 4.0),
           child: Row(
             children: [
               Container(
-                width: 12.w,
-                height: 12.h,
+                width: 12.0,
+                height: 12.0,
                 decoration: BoxDecoration(
                   color: dataPoint.isPositive ? Colors.green : Colors.red,
-                  borderRadius: BorderRadius.circular(6.r),
+                  borderRadius: BorderRadius.circular(6.0),
                 ),
               ),
-              SizedBox(width: 8.w),
+              SizedBox(width: 8.0),
               Expanded(
                 child: Text(
                   '${dataPoint.label}: ${dataPoint.value >= 0 ? '+' : ''}\$${dataPoint.value.toStringAsFixed(0)}',
                   style: TextStyle(
-                    fontSize: 12.sp,
+                    fontSize: 12.0,
                     color: dataPoint.isPositive ? Colors.green : Colors.red,
                   ),
                 ),
@@ -592,7 +592,7 @@ class _TransactionsViewState extends State<TransactionsView>
           Text(
             '... y ${chartData.length - 5} más',
             style: TextStyle(
-              fontSize: 12.sp,
+              fontSize: 12.0,
               color: Colors.grey[600],
               fontStyle: FontStyle.italic,
             ),

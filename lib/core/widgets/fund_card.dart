@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import '../services/responsive_service.dart';
 
 import 'package:fund_manager/core/widgets/custom_button.dart';
 import 'package:fund_manager/core/widgets/subscription_status_badge.dart';
@@ -47,10 +47,10 @@ class FundCard extends StatelessWidget {
         final isSubscribed = effectiveUserFund != null && effectiveUserFund.isActive;
 
         return Card(
-          margin: EdgeInsets.only(bottom: 12.h),
+          margin: EdgeInsets.only(bottom: 12.0),
           elevation: 2,
           child: Padding(
-            padding: EdgeInsets.all(16.w),
+            padding: EdgeInsets.all(16.0),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
@@ -64,34 +64,34 @@ class FundCard extends StatelessWidget {
                           Text(
                             fund.name,
                             style: TextStyle(
-                              fontSize: 16.sp,
+                              fontSize: 16.0,
                               fontWeight: FontWeight.bold,
                             ),
                             maxLines: 2,
                             overflow: TextOverflow.ellipsis,
                           ),
-                          SizedBox(height: 4.h),
+                          SizedBox(height: 4.0),
                           Text(
                             fund.type,
                             style: TextStyle(
-                              fontSize: 12.sp,
+                              fontSize: 12.0,
                               color: Colors.grey[600],
                             ),
                           ),
                         ],
                       ),
                     ),
-                    SizedBox(width: 12.w),
+                    SizedBox(width: 12.0),
                     Column(
                       crossAxisAlignment: CrossAxisAlignment.end,
                       children: [
                         Container(
                           padding:
-                              EdgeInsets.symmetric(horizontal: 8.w, vertical: 4.h),
+                              EdgeInsets.symmetric(horizontal: 8.0, vertical: 4.0),
                           decoration: BoxDecoration(
                             color: FormatUtils.getCategoryColor(fund.category)
                                 .withOpacity(0.1),
-                            borderRadius: BorderRadius.circular(12.r),
+                            borderRadius: BorderRadius.circular(12.0),
                             border: Border.all(
                               color: FormatUtils.getCategoryColor(fund.category)
                                   .withOpacity(0.3),
@@ -101,21 +101,21 @@ class FundCard extends StatelessWidget {
                           child: Text(
                             fund.category,
                             style: TextStyle(
-                              fontSize: 10.sp,
+                              fontSize: 10.0,
                               fontWeight: FontWeight.w600,
                               color: FormatUtils.getCategoryColor(fund.category),
                             ),
                           ),
                         ),
                         if (isSubscribed) ...[
-                          SizedBox(height: 4.h),
+                          SizedBox(height: 4.0),
                           SubscriptionStatusBadge(isSubscribed: isSubscribed),
                         ],
                       ],
                     ),
                   ],
                 ),
-                SizedBox(height: 12.h),
+                SizedBox(height: 12.0),
                 Row(
                   children: [
                     Expanded(
@@ -131,7 +131,7 @@ class FundCard extends StatelessWidget {
                     ),
                   ],
                 ),
-                SizedBox(height: 8.h),
+                SizedBox(height: 8.0),
                 Row(
                   children: [
                     Expanded(
@@ -141,11 +141,11 @@ class FundCard extends StatelessWidget {
                   ],
                 ),
                 if (isSubscribed && effectiveUserFund != null) ...[
-                  SizedBox(height: 8.h),
+                  SizedBox(height: 8.0),
                   SubscriptionInfoCard(effectiveUserFund: effectiveUserFund),
                 ],
                 if (showActions) ...[
-                  SizedBox(height: 12.h),
+                  SizedBox(height: 12.0),
                   Row(
                     children: [
                       Expanded(
@@ -161,7 +161,7 @@ class FundCard extends StatelessWidget {
                           type: ButtonType.outline,
                         ),
                       ),
-                      SizedBox(width: 8.w),
+                      SizedBox(width: 8.0),
                       Expanded(
                         child: CustomButton(
                           text: isSubscribed ? 'Cancelar Suscripción' : 'Suscribirse',
@@ -191,15 +191,15 @@ class FundCard extends StatelessWidget {
         Text(
           label,
           style: TextStyle(
-            fontSize: 10.sp,
+            fontSize: 10.0,
             color: Colors.grey[600],
           ),
         ),
-        SizedBox(height: 2.h),
+        SizedBox(height: 2.0),
         Text(
           value,
           style: TextStyle(
-            fontSize: 12.sp,
+            fontSize: 12.0,
             fontWeight: FontWeight.w500,
           ),
           maxLines: 1,
@@ -259,7 +259,7 @@ class FundCard extends StatelessWidget {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Text('Monto mínimo: \$${fund.minAmount.toStringAsFixed(0)}'),
-              SizedBox(height: 16.h),
+              SizedBox(height: 16.0),
               TextField(
                 controller: amountController,
                 keyboardType: TextInputType.number,

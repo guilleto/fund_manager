@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_screenutil/flutter_screenutil.dart';
+
 import 'package:flutter_bloc/flutter_bloc.dart';
 
 import 'package:fund_manager/core/widgets/custom_button.dart';
@@ -134,16 +134,16 @@ class _WelcomeViewState extends State<WelcomeView>
       ),
       child: SafeArea(
         child: Padding(
-          padding: EdgeInsets.all(24.w),
+          padding: EdgeInsets.all(24.0),
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
               _buildLogoSection(),
-              SizedBox(height: 40.h),
+              SizedBox(height: 40.0),
               _buildWelcomeText(),
-              SizedBox(height: 32.h),
+              SizedBox(height: 32.0),
               _buildDescriptionText(),
-              SizedBox(height: 48.h),
+              SizedBox(height: 48.0),
               _buildStartButton(),
             ],
           ),
@@ -167,16 +167,16 @@ class _WelcomeViewState extends State<WelcomeView>
       ),
       child: SafeArea(
         child: Padding(
-          padding: EdgeInsets.all(48.w),
+          padding: EdgeInsets.all(48.0),
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
               _buildLogoSection(),
-              SizedBox(height: 60.h),
+              SizedBox(height: 60.0),
               _buildWelcomeText(),
-              SizedBox(height: 40.h),
+              SizedBox(height: 40.0),
               _buildDescriptionText(),
-              SizedBox(height: 60.h),
+              SizedBox(height: 60.0),
               _buildStartButton(),
             ],
           ),
@@ -201,16 +201,16 @@ class _WelcomeViewState extends State<WelcomeView>
       ),
       child: SafeArea(
         child: Padding(
-          padding: EdgeInsets.all(64.w),
+          padding: EdgeInsets.all(64.0),
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
               _buildLogoSection(),
-              SizedBox(height: 80.h),
+              SizedBox(height: 80.0),
               _buildWelcomeText(),
-              SizedBox(height: 48.h),
+              SizedBox(height: 48.0),
               _buildDescriptionText(),
-              SizedBox(height: 80.h),
+              SizedBox(height: 80.0),
               _buildStartButton(),
             ],
           ),
@@ -225,7 +225,7 @@ class _WelcomeViewState extends State<WelcomeView>
       child: FadeTransition(
         opacity: _fadeAnimation,
         child: Container(
-          padding: EdgeInsets.all(32.w),
+          padding: EdgeInsets.all(32.0),
           decoration: BoxDecoration(
             color: Colors.white.withOpacity(0.1),
             shape: BoxShape.circle,
@@ -236,7 +236,7 @@ class _WelcomeViewState extends State<WelcomeView>
           ),
           child: Icon(
             Icons.account_balance,
-            size: 80.sp,
+            size: 80.0,
             color: Colors.white,
           ),
         ),
@@ -252,7 +252,7 @@ class _WelcomeViewState extends State<WelcomeView>
         child: Text(
           'Fund Manager',
           style: TextStyle(
-            fontSize: 36.sp,
+            fontSize: 36.0,
             fontWeight: FontWeight.bold,
             color: Colors.white,
             letterSpacing: 1.2,
@@ -271,7 +271,7 @@ class _WelcomeViewState extends State<WelcomeView>
         child: Text(
           'Tu plataforma profesional para la gestión inteligente de fondos de inversión. Descubre herramientas avanzadas y análisis detallado para maximizar tus retornos.',
           style: TextStyle(
-            fontSize: 18.sp,
+            fontSize: 18.0,
             color: Colors.white.withOpacity(0.9),
             height: 1.5,
           ),
@@ -302,7 +302,7 @@ class _WelcomeViewState extends State<WelcomeView>
           },
           type: ButtonType.primary,
           isFullWidth: true,
-          height: 56.h,
+          height: 56.0,
           icon: Icons.arrow_forward,
         ),
       ),

@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:flutter_screenutil/flutter_screenutil.dart';
+import '../services/responsive_service.dart';
 
 class CustomTextField extends StatelessWidget {
   final String? label;
@@ -49,6 +49,7 @@ class CustomTextField extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
+    final responsiveService = ResponsiveService.instance;
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -60,7 +61,7 @@ class CustomTextField extends StatelessWidget {
               fontWeight: FontWeight.w500,
             ),
           ),
-          SizedBox(height: 8.h),
+          SizedBox(height: responsiveService.getVerticalSpacing(context, SpacingType.small)),
         ],
         TextFormField(
           controller: controller,
@@ -81,25 +82,25 @@ class CustomTextField extends StatelessWidget {
             hintText: hint,
             prefixIcon: prefixIcon,
             suffixIcon: suffixIcon,
-            contentPadding: contentPadding ?? EdgeInsets.all(16.w),
+            contentPadding: contentPadding ?? responsiveService.getPadding(context, PaddingType.medium),
             border: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(8.r),
+              borderRadius: BorderRadius.circular(8.0),
               borderSide: BorderSide(color: theme.dividerColor),
             ),
             enabledBorder: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(8.r),
+              borderRadius: BorderRadius.circular(8.0),
               borderSide: BorderSide(color: theme.dividerColor),
             ),
             focusedBorder: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(8.r),
+              borderRadius: BorderRadius.circular(8.0),
               borderSide: BorderSide(color: theme.primaryColor, width: 2),
             ),
             errorBorder: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(8.r),
+              borderRadius: BorderRadius.circular(8.0),
               borderSide: BorderSide(color: theme.colorScheme.error),
             ),
             focusedErrorBorder: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(8.r),
+              borderRadius: BorderRadius.circular(8.0),
               borderSide: BorderSide(color: theme.colorScheme.error, width: 2),
             ),
             filled: true,

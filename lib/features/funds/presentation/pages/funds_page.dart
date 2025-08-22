@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_screenutil/flutter_screenutil.dart';
+
 import 'package:flutter_bloc/flutter_bloc.dart';
 
 import 'package:fund_manager/core/widgets/custom_button.dart';
@@ -93,23 +93,23 @@ class _FundsViewState extends State<FundsView> {
                         mainAxisSize: MainAxisSize.min,
                         children: [
                           Container(
-                            width: 8.w,
-                            height: 8.h,
+                            width: 8.0,
+                            height: 8.0,
                             decoration: BoxDecoration(
                               color: Colors.green[400],
                               shape: BoxShape.circle,
                             ),
                           ),
-                          SizedBox(width: 4.w),
+                          SizedBox(width: 4.0),
                                                    Text(
                            'Fondos por minuto',
                            style: TextStyle(
-                             fontSize: 12.sp,
+                             fontSize: 12.0,
                              color: Colors.green[600],
                              fontWeight: FontWeight.w500,
                            ),
                          ),
-                          SizedBox(width: 8.w),
+                          SizedBox(width: 8.0),
                         ],
                       ),
                       IconButton(
@@ -188,26 +188,26 @@ class _FundsViewState extends State<FundsView> {
 
   Widget _buildFiltersSection(BuildContext context, FundsLoaded state) {
     return Card(
-      margin: EdgeInsets.all(16.w),
+      margin: EdgeInsets.all(16.0),
       child: Padding(
-        padding: EdgeInsets.all(16.w),
+        padding: EdgeInsets.all(16.0),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Text(
               'Filtros',
               style: TextStyle(
-                fontSize: 18.sp,
+                fontSize: 18.0,
                 fontWeight: FontWeight.bold,
               ),
             ),
-            SizedBox(height: 16.h),
+            SizedBox(height: 16.0),
             _buildCategoryFilter(context, state),
-            SizedBox(height: 12.h),
+            SizedBox(height: 12.0),
             _buildRiskFilter(context, state),
-            SizedBox(height: 12.h),
+            SizedBox(height: 12.0),
             _buildMinAmountFilter(context, state),
-            SizedBox(height: 16.h),
+            SizedBox(height: 16.0),
             Row(
               children: [
                 Expanded(
@@ -233,9 +233,9 @@ class _FundsViewState extends State<FundsView> {
       children: [
         Text(
           'Categoría',
-          style: TextStyle(fontSize: 14.sp, fontWeight: FontWeight.w500),
+          style: TextStyle(fontSize: 14.0, fontWeight: FontWeight.w500),
         ),
-        SizedBox(height: 8.h),
+        SizedBox(height: 8.0),
         DropdownButtonFormField<String>(
           value: state.filters.category,
           decoration: const InputDecoration(
@@ -262,9 +262,9 @@ class _FundsViewState extends State<FundsView> {
       children: [
         Text(
           'Riesgo',
-          style: TextStyle(fontSize: 14.sp, fontWeight: FontWeight.w500),
+          style: TextStyle(fontSize: 14.0, fontWeight: FontWeight.w500),
         ),
-        SizedBox(height: 8.h),
+        SizedBox(height: 8.0),
         DropdownButtonFormField<String>(
           value: state.filters.risk,
           decoration: const InputDecoration(
@@ -304,9 +304,9 @@ class _FundsViewState extends State<FundsView> {
       children: [
         Text(
           'Rango de monto mínimo',
-          style: TextStyle(fontSize: 14.sp, fontWeight: FontWeight.w500),
+          style: TextStyle(fontSize: 14.0, fontWeight: FontWeight.w500),
         ),
-        SizedBox(height: 8.h),
+        SizedBox(height: 8.0),
         RangeSlider(
           values: currentRange,
           min: minAmount.toDouble(),
@@ -325,11 +325,11 @@ class _FundsViewState extends State<FundsView> {
           children: [
             Text(
               'Desde: ${FormatUtils.formatCurrencyInt(currentRange.start.toInt())}',
-              style: TextStyle(fontSize: 12.sp, color: Colors.grey[600]),
+              style: TextStyle(fontSize: 12.0, color: Colors.grey[600]),
             ),
             Text(
               'Hasta: ${FormatUtils.formatCurrencyInt(currentRange.end.toInt())}',
-              style: TextStyle(fontSize: 12.sp, color: Colors.grey[600]),
+              style: TextStyle(fontSize: 12.0, color: Colors.grey[600]),
             ),
           ],
         ),
@@ -347,7 +347,7 @@ class _FundsViewState extends State<FundsView> {
                   child: Text('No se encontraron fondos con los filtros aplicados'),
                 )
               : ListView.builder(
-                  padding: EdgeInsets.all(16.w),
+                  padding: EdgeInsets.all(16.0),
                   itemCount: state.filteredFunds.length,
                   itemBuilder: (context, index) {
                     final fund = state.filteredFunds[index];
@@ -370,9 +370,9 @@ class _FundsViewState extends State<FundsView> {
 
   Widget _buildSummarySection(BuildContext context, FundsLoaded state) {
     return Card(
-      margin: EdgeInsets.all(16.w),
+      margin: EdgeInsets.all(16.0),
       child: Padding(
-        padding: EdgeInsets.all(16.w),
+        padding: EdgeInsets.all(16.0),
         child: Row(
           children: [
             Expanded(
@@ -412,19 +412,19 @@ class _FundsViewState extends State<FundsView> {
   Widget _buildSummaryItem(String label, String value, IconData icon) {
     return Column(
       children: [
-        Icon(icon, size: 24.sp, color: Colors.blue),
-        SizedBox(height: 8.h),
+        Icon(icon, size: 24.0, color: Colors.blue),
+        SizedBox(height: 8.0),
         Text(
           value,
           style: TextStyle(
-            fontSize: 18.sp,
+            fontSize: 18.0,
             fontWeight: FontWeight.bold,
           ),
         ),
         Text(
           label,
           style: TextStyle(
-            fontSize: 12.sp,
+            fontSize: 12.0,
             color: Colors.grey[600],
           ),
           textAlign: TextAlign.center,

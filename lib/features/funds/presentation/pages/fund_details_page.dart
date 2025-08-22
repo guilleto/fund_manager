@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_screenutil/flutter_screenutil.dart';
+
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:fund_manager/core/services/notification_service.dart';
 import 'package:fund_manager/core/services/user_service.dart';
@@ -195,15 +195,15 @@ class _FundDetailsViewState extends State<FundDetailsView> {
       builder: (context, appState) {
         if (appState is AppLoaded) {
           return SingleChildScrollView(
-            padding: EdgeInsets.all(16.w),
+            padding: EdgeInsets.all(16.0),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 _buildFundCard(context, appState.currentUser, fund),
-                SizedBox(height: 24.h),
+                SizedBox(height: 24.0),
                 _buildSubscriptionForm(context, appState.currentUser, fund),
                 if (appState.errorMessage != null) ...[
-                  SizedBox(height: 16.h),
+                  SizedBox(height: 16.0),
                   _buildErrorMessage(appState.errorMessage!),
                 ],
               ],
@@ -224,14 +224,14 @@ class _FundDetailsViewState extends State<FundDetailsView> {
               Expanded(
                 flex: 2,
                 child: SingleChildScrollView(
-                  padding: EdgeInsets.all(24.w),
+                  padding: EdgeInsets.all(24.0),
                   child: _buildFundCard(context, appState.currentUser, fund),
                 ),
               ),
               Expanded(
                 flex: 1,
                 child: Container(
-                  padding: EdgeInsets.all(24.w),
+                  padding: EdgeInsets.all(24.0),
                   decoration: BoxDecoration(
                     border: Border(
                       left: BorderSide(
@@ -247,10 +247,10 @@ class _FundDetailsViewState extends State<FundDetailsView> {
                         'Suscribirse',
                         style: Theme.of(context).textTheme.headlineSmall,
                       ),
-                      SizedBox(height: 24.h),
+                      SizedBox(height: 24.0),
                       _buildSubscriptionForm(context, appState.currentUser, fund),
                       if (appState.errorMessage != null) ...[
-                        SizedBox(height: 16.h),
+                        SizedBox(height: 16.0),
                         _buildErrorMessage(appState.errorMessage!),
                       ],
                     ],
@@ -268,25 +268,25 @@ class _FundDetailsViewState extends State<FundDetailsView> {
   Widget _buildFundCard(BuildContext context, User? currentUser, Fund fund) {
     return Card(
       child: Padding(
-        padding: EdgeInsets.all(20.w),
+        padding: EdgeInsets.all(20.0),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Row(
               children: [
                 Container(
-                  padding: EdgeInsets.all(12.r),
+                  padding: EdgeInsets.all(12.0),
                   decoration: BoxDecoration(
                     color: FormatUtils.getCategoryColor(fund.category),
-                    borderRadius: BorderRadius.circular(8.r),
+                    borderRadius: BorderRadius.circular(8.0),
                   ),
                   child: Icon(
                     Icons.account_balance,
                     color: Colors.white,
-                    size: 24.sp,
+                    size: 24.0,
                   ),
                 ),
-                SizedBox(width: 16.w),
+                SizedBox(width: 16.0),
                 Expanded(
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
@@ -309,7 +309,7 @@ class _FundDetailsViewState extends State<FundDetailsView> {
                 ),
               ],
             ),
-            SizedBox(height: 24.h),
+            SizedBox(height: 24.0),
             _buildInfoRow('Categoría', fund.category),
             _buildInfoRow('Riesgo', fund.risk),
             _buildInfoRow('Estado', fund.status),
@@ -318,9 +318,9 @@ class _FundDetailsViewState extends State<FundDetailsView> {
             _buildInfoRow('Rendimiento',
                 '${fund.performance.toStringAsFixed(2)}% por minuto'),
             if (currentUser != null) ...[
-              SizedBox(height: 16.h),
+              SizedBox(height: 16.0),
               Divider(),
-              SizedBox(height: 16.h),
+              SizedBox(height: 16.0),
               _buildInfoRow(
                   'Tu Saldo', FormatUtils.formatAmount(currentUser.balance)),
               _buildInfoRow('Preferencia de Notificación',
@@ -334,14 +334,14 @@ class _FundDetailsViewState extends State<FundDetailsView> {
 
   Widget _buildInfoRow(String label, String value) {
     return Padding(
-      padding: EdgeInsets.symmetric(vertical: 8.h),
+      padding: EdgeInsets.symmetric(vertical: 8.0),
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
           Text(
             label,
             style: TextStyle(
-              fontSize: 16.sp,
+              fontSize: 16.0,
               fontWeight: FontWeight.w500,
               color: Colors.grey[700],
             ),
@@ -349,7 +349,7 @@ class _FundDetailsViewState extends State<FundDetailsView> {
           Text(
             value,
             style: TextStyle(
-              fontSize: 16.sp,
+              fontSize: 16.0,
               fontWeight: FontWeight.w600,
             ),
           ),
@@ -365,7 +365,7 @@ class _FundDetailsViewState extends State<FundDetailsView> {
 
     return Card(
       child: Padding(
-        padding: EdgeInsets.all(20.w),
+        padding: EdgeInsets.all(20.0),
         child: Form(
           key: _formKey,
           child: Column(
@@ -375,7 +375,7 @@ class _FundDetailsViewState extends State<FundDetailsView> {
                 'Suscribirse al Fondo',
                 style: Theme.of(context).textTheme.headlineSmall,
               ),
-              SizedBox(height: 20.h),
+              SizedBox(height: 20.0),
               CustomTextField(
                 controller: _amountController,
                 label: 'Monto a invertir',
@@ -398,12 +398,12 @@ class _FundDetailsViewState extends State<FundDetailsView> {
                   return null;
                 },
               ),
-              SizedBox(height: 20.h),
+              SizedBox(height: 20.0),
               Text(
                 'Método de notificación',
                 style: Theme.of(context).textTheme.titleMedium,
               ),
-              SizedBox(height: 12.h),
+              SizedBox(height: 12.0),
               ...NotificationPreference.values
                   .map((preference) => RadioListTile<NotificationPreference>(
                         title: Text(preference.displayName),
@@ -415,7 +415,7 @@ class _FundDetailsViewState extends State<FundDetailsView> {
                           });
                         },
                       )),
-              SizedBox(height: 24.h),
+              SizedBox(height: 24.0),
               CustomButton(
                 text: _isSubscribing ? 'Procesando...' : 'Suscribirse',
                 onPressed:
@@ -432,16 +432,16 @@ class _FundDetailsViewState extends State<FundDetailsView> {
 
   Widget _buildErrorMessage(String message) {
     return Container(
-      padding: EdgeInsets.all(16.w),
+      padding: EdgeInsets.all(16.0),
       decoration: BoxDecoration(
         color: Colors.red[50],
         border: Border.all(color: Colors.red[200]!),
-        borderRadius: BorderRadius.circular(8.r),
+        borderRadius: BorderRadius.circular(8.0),
       ),
       child: Row(
         children: [
           Icon(Icons.error, color: Colors.red[600]),
-          SizedBox(width: 12.w),
+          SizedBox(width: 12.0),
           Expanded(
             child: Text(
               message,

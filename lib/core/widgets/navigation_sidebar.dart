@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_screenutil/flutter_screenutil.dart';
+
 import 'package:flutter_bloc/flutter_bloc.dart';
 
 import 'package:fund_manager/core/blocs/app_bloc.dart';
@@ -43,22 +43,22 @@ class NavigationSidebar extends StatelessWidget {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 CircleAvatar(
-                  radius: 30.r,
+                  radius: 30.0,
                   backgroundColor: Colors.white.withOpacity(0.2),
                   child: Text(
                     firstName[0].toUpperCase(),
                     style: TextStyle(
-                      fontSize: 24.sp,
+                      fontSize: 24.0,
                       fontWeight: FontWeight.bold,
                       color: Colors.white,
                     ),
                   ),
                 ),
-                SizedBox(height: 12.h),
+                SizedBox(height: 12.0),
                 Text(
                   'Hola, $firstName',
                   style: TextStyle(
-                    fontSize: 18.sp,
+                    fontSize: 18.0,
                     fontWeight: FontWeight.bold,
                     color: Colors.white,
                   ),
@@ -66,7 +66,7 @@ class NavigationSidebar extends StatelessWidget {
                 Text(
                   user.email,
                   style: TextStyle(
-                    fontSize: 14.sp,
+                    fontSize: 14.0,
                     color: Colors.white70,
                   ),
                 ),
@@ -83,19 +83,19 @@ class NavigationSidebar extends StatelessWidget {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               CircleAvatar(
-                radius: 30.r,
+                radius: 30.0,
                 backgroundColor: Colors.white.withOpacity(0.2),
                 child: Icon(
                   Icons.person,
-                  size: 30.sp,
+                  size: 30.0,
                   color: Colors.white,
                 ),
               ),
-              SizedBox(height: 12.h),
+              SizedBox(height: 12.0),
               Text(
                 'Fund Manager',
                 style: TextStyle(
-                  fontSize: 18.sp,
+                  fontSize: 18.0,
                   fontWeight: FontWeight.bold,
                   color: Colors.white,
                 ),
@@ -132,7 +132,7 @@ class NavigationSidebar extends StatelessWidget {
           subtitle: 'Mis inversiones',
           route: AppRoute.myFunds,
         ),
-        Divider(height: 32.h),
+        Divider(height: 32.0),
         _buildNavigationItem(
           context,
           icon: Icons.history,
@@ -165,25 +165,25 @@ class NavigationSidebar extends StatelessWidget {
         
         return ListTile(
           leading: Container(
-            padding: EdgeInsets.all(8.w),
+            padding: EdgeInsets.all(8.0),
             decoration: BoxDecoration(
               color: isActive 
                   ? Theme.of(context).primaryColor.withOpacity(0.1)
                   : Colors.transparent,
-              borderRadius: BorderRadius.circular(8.r),
+              borderRadius: BorderRadius.circular(8.0),
             ),
             child: Icon(
               icon,
               color: isActive 
                   ? Theme.of(context).primaryColor
                   : Colors.grey[600],
-              size: 20.sp,
+              size: 20.0,
             ),
           ),
           title: Text(
             title,
             style: TextStyle(
-              fontSize: 16.sp,
+              fontSize: 16.0,
               fontWeight: isActive ? FontWeight.w600 : FontWeight.w500,
               color: isActive 
                   ? Theme.of(context).primaryColor
@@ -193,7 +193,7 @@ class NavigationSidebar extends StatelessWidget {
           subtitle: Text(
             subtitle,
             style: TextStyle(
-              fontSize: 12.sp,
+              fontSize: 12.0,
               color: Colors.grey[600],
             ),
           ),
@@ -210,24 +210,24 @@ class NavigationSidebar extends StatelessWidget {
 
   Widget _buildFooter(BuildContext context) {
     return Container(
-      padding: EdgeInsets.all(16.w),
+      padding: EdgeInsets.all(16.0),
       child: Column(
         children: [
           Divider(),
-          SizedBox(height: 8.h),
+          SizedBox(height: 8.0),
           Row(
             children: [
               Icon(
                 Icons.info_outline,
-                size: 16.sp,
+                size: 16.0,
                 color: Colors.grey[600],
               ),
-              SizedBox(width: 8.w),
+              SizedBox(width: 8.0),
               Expanded(
                 child: Text(
                   'Fund Manager v1.0',
                   style: TextStyle(
-                    fontSize: 12.sp,
+                    fontSize: 12.0,
                     color: Colors.grey[600],
                   ),
                 ),
