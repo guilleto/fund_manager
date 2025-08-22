@@ -31,6 +31,15 @@ class MyFundsView extends StatefulWidget {
 
 class _MyFundsViewState extends State<MyFundsView> {
   @override
+  void initState() {
+    super.initState();
+    // Actualizar datos al entrar a la página
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      context.read<AppBloc>().add(const AppRefreshData());
+    });
+  }
+
+  @override
   Widget build(BuildContext context) {
     return BlocBuilder<AppBloc, AppState>(
       builder: (context, state) {

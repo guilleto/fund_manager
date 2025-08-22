@@ -5,6 +5,7 @@ import 'package:fund_manager/core/blocs/app_bloc.dart';
 import 'package:fund_manager/core/services/user_service.dart';
 import 'package:fund_manager/core/services/notification_service.dart';
 import 'package:fund_manager/features/funds/presentation/blocs/funds_bloc.dart';
+import 'package:fund_manager/features/dashboard/presentation/blocs/dashboard_bloc.dart';
 
 class AppProvider extends StatelessWidget {
   final Widget child;
@@ -36,6 +37,11 @@ class AppProvider extends StatelessWidget {
             create: (context) => FundsBloc(
               context.read<UserService>(),
             )..add(const FundsStarted()),
+          ),
+          BlocProvider<DashboardBloc>(
+            create: (context) => DashboardBloc(
+              userService: context.read<UserService>(),
+            )..add(const DashboardStarted()),
           ),
         ],
         child: child,

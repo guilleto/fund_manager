@@ -21,8 +21,22 @@ class FundsPage extends StatelessWidget {
   }
 }
 
-class FundsView extends StatelessWidget {
+class FundsView extends StatefulWidget {
   const FundsView({super.key});
+
+  @override
+  State<FundsView> createState() => _FundsViewState();
+}
+
+class _FundsViewState extends State<FundsView> {
+  @override
+  void initState() {
+    super.initState();
+    // Actualizar datos al entrar a la página
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      context.read<AppBloc>().add(const AppRefreshData());
+    });
+  }
 
   @override
   Widget build(BuildContext context) {
