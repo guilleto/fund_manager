@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:fund_manager/core/services/notification_service.dart';
+import 'package:fund_manager/core/services/user_service.dart';
 
 import 'package:fund_manager/core/widgets/custom_button.dart';
 import 'package:fund_manager/core/widgets/custom_text_field.dart';
@@ -13,8 +15,6 @@ import 'package:fund_manager/core/navigation/app_router.dart';
 import 'package:fund_manager/features/funds/presentation/blocs/funds_bloc.dart';
 import 'package:fund_manager/features/funds/domain/models/fund.dart';
 import 'package:fund_manager/features/funds/domain/models/user.dart';
-import 'package:fund_manager/features/funds/domain/services/user_funds_service.dart';
-import 'package:fund_manager/features/funds/domain/services/notification_service.dart';
 
 class FundDetailsPage extends StatelessWidget {
   final Fund fund;
@@ -28,7 +28,7 @@ class FundDetailsPage extends StatelessWidget {
   Widget build(BuildContext context) {
     return BlocProvider(
       create: (context) =>
-          FundsBloc(MockUserFundsService(MockNotificationService()))
+          FundsBloc(MockUserService(MockNotificationService()))
             ..add(const FundsStarted()),
       child: FundDetailsView(fund: fund),
     );
