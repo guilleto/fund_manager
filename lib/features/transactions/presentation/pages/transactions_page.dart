@@ -4,7 +4,6 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:fl_chart/fl_chart.dart';
 
 import 'package:fund_manager/core/widgets/app_scaffold.dart';
-import 'package:fund_manager/core/widgets/responsive_widget.dart';
 import 'package:fund_manager/core/utils/format_utils.dart';
 import 'package:fund_manager/core/blocs/app_bloc.dart';
 import 'package:fund_manager/features/funds/domain/models/transaction.dart';
@@ -16,7 +15,21 @@ class TransactionsPage extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return BlocProvider(
-      create: (context) => TransactionsBloc()..add(const TransactionsStarted()),
+      create: (context) {
+        final transactionsBloc = TransactionsBloc();
+        
+        // Verificar si el AppBloc ya está cargado y sincronizar inmediatamente
+        final appState = context.read<AppBloc>().state;
+        if (appState is AppLoaded) {
+          print('AppBloc ya está cargado, sincronizando inmediatamente');
+          transactionsBloc.add(TransactionsSyncWithAppBloc(appState.transactions));
+        } else {
+          print('AppBloc no está cargado aún, iniciando normalmente');
+          transactionsBloc.add(const TransactionsStarted());
+        }
+        
+        return transactionsBloc;
+      },
       child: const TransactionsView(),
     );
   }
@@ -32,8 +45,8 @@ class TransactionsView extends StatefulWidget {
 class _TransactionsViewState extends State<TransactionsView>
     with TickerProviderStateMixin {
   late TabController _tabController;
-  String _selectedFilter = 'Todas';
-  String _selectedPeriod = 'Último mes';
+  String _selectedFilter = 'all';
+  String _selectedPeriod = 'all';
 
   @override
   void initState() {
@@ -55,33 +68,46 @@ class _TransactionsViewState extends State<TransactionsView>
           listener: (context, state) {
             if (state is AppLoaded && !state.isLoading) {
               // Sincronizar transacciones cuando el AppBloc se actualiza
-              context.read<TransactionsBloc>().add(const TransactionsSyncWithAppBloc());
+              print('Sincronizando transacciones con el AppBloc');
+              context.read<TransactionsBloc>().add(TransactionsSyncWithAppBloc(state.transactions));
             }
+            print('AppBloc cargado: ${state is AppLoaded}');
           },
         ),
       ],
-      child: BlocBuilder<TransactionsBloc, TransactionsState>(
-        builder: (context, state) {
-          return AppScaffold(
-            title: 'Historial de Transacciones',
-            actions: [
-              IconButton(
-                icon: const Icon(Icons.refresh),
-                onPressed: () {
-                  context.read<TransactionsBloc>().add(const TransactionsRefresh());
-                  context.read<AppBloc>().add(const AppLoadUserData());
-                },
-                tooltip: 'Actualizar',
-              ),
-            ],
-            body: state is TransactionsLoading
-                ? const Center(child: CircularProgressIndicator())
-                : state is TransactionsLoaded
-                    ? _buildContent(context, state)
-                    : state is TransactionsError
-                        ? Center(child: Text('Error: ${state.message}'))
-                        : const Center(child: Text('Cargando...')),
-          );
+      child: BlocBuilder<AppBloc, AppState>(
+        builder: (context, appState) {
+          print('AppBloc cargado: ${appState is AppLoaded}');
+          if (appState is AppLoaded) {
+            return BlocBuilder<TransactionsBloc, TransactionsState>(
+              builder: (context, transactionsState) {
+                print('TransactionsBloc cargado: ${transactionsState is TransactionsLoaded}');
+                return AppScaffold(
+                  title: 'Historial de Transacciones',
+                  actions: [
+                    IconButton(
+                      icon: const Icon(Icons.refresh),
+                      onPressed: () {
+                        context.read<TransactionsBloc>().add(const TransactionsRefresh());
+                        context.read<AppBloc>().add(const AppRefreshData());
+                      },
+                      tooltip: 'Actualizar',
+                    ),
+                  ],
+                  body: transactionsState is TransactionsLoading
+                      ? const Center(child: CircularProgressIndicator(
+                        color: Colors.teal,
+                      ))
+                      : transactionsState is TransactionsLoaded
+                          ? _buildContent(context, transactionsState)
+                          : const Center(child: Text('Cargando...')),
+                );
+              },
+            );
+          }
+          return const Center(child: CircularProgressIndicator(
+            color: Colors.red,
+          ));
         },
       ),
     );
@@ -105,251 +131,157 @@ class _TransactionsViewState extends State<TransactionsView>
   }
 
   Widget _buildFilters(BuildContext context, TransactionsLoaded state) {
-    return Container(
-      padding: EdgeInsets.all(16.w),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        boxShadow: [
-          BoxShadow(
-            color: Colors.grey.withOpacity(0.1),
-            spreadRadius: 1,
-            blurRadius: 3,
-            offset: const Offset(0, 1),
-          ),
-        ],
-      ),
-      child: Column(
-        children: [
-          TabBar(
-            controller: _tabController,
-            labelColor: Theme.of(context).primaryColor,
-            unselectedLabelColor: Colors.grey[600],
-            indicatorColor: Theme.of(context).primaryColor,
-            tabs: const [
-              Tab(text: 'Transacciones'),
-              Tab(text: 'Análisis'),
-            ],
-          ),
-          SizedBox(height: 16.h),
-          Row(
-            children: [
-              Expanded(
-                child: _buildFilterDropdown(
-                  'Filtro',
-                  _selectedFilter,
-                  ['Todas', 'Suscripciones', 'Cancelaciones', 'Rendimientos'],
-                  (value) {
-                    setState(() {
-                      _selectedFilter = value;
-                    });
-                    context.read<TransactionsBloc>().add(
-                          TransactionsFilterChanged(filter: value),
-                        );
-                  },
-                ),
-              ),
-              SizedBox(width: 16.w),
-              Expanded(
-                child: _buildFilterDropdown(
-                  'Período',
-                  _selectedPeriod,
-                  ['Último mes', 'Últimos 3 meses', 'Último año', 'Todo'],
-                  (value) {
-                    setState(() {
-                      _selectedPeriod = value;
-                    });
-                    context.read<TransactionsBloc>().add(
-                          TransactionsPeriodChanged(period: value),
-                        );
-                  },
-                ),
-              ),
-            ],
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildFilterDropdown(
-    String label,
-    String value,
-    List<String> options,
-    Function(String) onChanged,
-  ) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Text(
-          label,
-          style: TextStyle(
-            fontSize: 12.sp,
-            fontWeight: FontWeight.w600,
-            color: Colors.grey[700],
-          ),
-        ),
-        SizedBox(height: 4.h),
-        Container(
-          padding: EdgeInsets.symmetric(horizontal: 12.w),
-          decoration: BoxDecoration(
-            border: Border.all(color: Colors.grey[300]!),
-            borderRadius: BorderRadius.circular(8.r),
-          ),
-          child: DropdownButtonHideUnderline(
-            child: DropdownButton<String>(
-              value: value,
-              isExpanded: true,
-              items: options.map((String option) {
-                return DropdownMenuItem<String>(
-                  value: option,
-                  child: Text(
-                    option,
-                    style: TextStyle(fontSize: 14.sp),
+    return Card(
+      margin: EdgeInsets.all(16.w),
+      child: Padding(
+        padding: EdgeInsets.all(16.w),
+        child: Column(
+          children: [
+            Row(
+              children: [
+                Expanded(
+                  child: DropdownButtonFormField<String>(
+                    value: _selectedFilter,
+                    decoration: const InputDecoration(
+                      labelText: 'Filtro',
+                      border: OutlineInputBorder(),
+                    ),
+                    items: const [
+                      DropdownMenuItem(value: 'all', child: Text('Todas')),
+                      DropdownMenuItem(value: 'subscription', child: Text('Suscripciones')),
+                      DropdownMenuItem(value: 'cancellation', child: Text('Cancelaciones')),
+                      DropdownMenuItem(value: 'completed', child: Text('Completadas')),
+                      DropdownMenuItem(value: 'pending', child: Text('Pendientes')),
+                    ],
+                    onChanged: (value) {
+                      if (value != null) {
+                        setState(() {
+                          _selectedFilter = value;
+                        });
+                        context.read<TransactionsBloc>().add(TransactionsFilterChanged(value));
+                      }
+                    },
                   ),
-                );
-              }).toList(),
-              onChanged: (String? newValue) {
-                if (newValue != null) {
-                  onChanged(newValue);
-                }
-              },
+                ),
+                SizedBox(width: 16.w),
+                Expanded(
+                  child: DropdownButtonFormField<String>(
+                    value: _selectedPeriod,
+                    decoration: const InputDecoration(
+                      labelText: 'Período',
+                      border: OutlineInputBorder(),
+                    ),
+                    items: const [
+                      DropdownMenuItem(value: 'all', child: Text('Todo')),
+                      DropdownMenuItem(value: 'today', child: Text('Hoy')),
+                      DropdownMenuItem(value: 'week', child: Text('Última semana')),
+                      DropdownMenuItem(value: 'month', child: Text('Último mes')),
+                      DropdownMenuItem(value: 'year', child: Text('Último año')),
+                    ],
+                    onChanged: (value) {
+                      if (value != null) {
+                        setState(() {
+                          _selectedPeriod = value;
+                        });
+                        context.read<TransactionsBloc>().add(TransactionsPeriodChanged(value));
+                      }
+                    },
+                  ),
+                ),
+              ],
             ),
-          ),
+            SizedBox(height: 16.h),
+            TabBar(
+              controller: _tabController,
+              tabs: const [
+                Tab(text: 'Lista'),
+                Tab(text: 'Análisis'),
+              ],
+            ),
+          ],
         ),
-      ],
+      ),
     );
   }
 
   Widget _buildTransactionsList(TransactionsLoaded state) {
-    final filteredTransactions = _getFilteredTransactions(state.transactions);
-
-    if (filteredTransactions.isEmpty) {
-      return Center(
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Icon(
-              Icons.receipt_long,
-              size: 64.sp,
-              color: Colors.grey[400],
-            ),
-            SizedBox(height: 16.h),
-            Text(
-              'No hay transacciones',
-              style: TextStyle(
-                fontSize: 18.sp,
-                fontWeight: FontWeight.w500,
-                color: Colors.grey[600],
-              ),
-            ),
-            SizedBox(height: 8.h),
-            Text(
-              'No se encontraron transacciones con los filtros seleccionados',
-              style: TextStyle(
-                fontSize: 14.sp,
-                color: Colors.grey[500],
-              ),
-              textAlign: TextAlign.center,
-            ),
-          ],
-        ),
+    if (state.transactions.isEmpty) {
+      return const Center(
+        child: Text('No hay transacciones para mostrar'),
       );
     }
 
     return ListView.builder(
       padding: EdgeInsets.all(16.w),
-      itemCount: filteredTransactions.length,
+      itemCount: state.transactions.length,
       itemBuilder: (context, index) {
-        final transaction = filteredTransactions[index];
+        final transaction = state.transactions[index];
         return _buildTransactionCard(transaction);
       },
     );
   }
 
   Widget _buildTransactionCard(Transaction transaction) {
-    final isPositive = transaction.type == TransactionType.subscription ||
-        transaction.type == TransactionType.performance;
-    final color = isPositive ? Colors.green : Colors.red;
-    final icon = _getTransactionIcon(transaction.type);
-
     return Card(
       margin: EdgeInsets.only(bottom: 12.h),
-      elevation: 2,
-      child: Padding(
-        padding: EdgeInsets.all(16.w),
-        child: Row(
+      child: ListTile(
+        leading: CircleAvatar(
+          backgroundColor: transaction.type == TransactionType.subscription 
+              ? Colors.green 
+              : Colors.red,
+          child: Icon(
+            transaction.type == TransactionType.subscription 
+                ? Icons.add 
+                : Icons.remove,
+            color: Colors.white,
+          ),
+        ),
+        title: Text(
+          transaction.fundName,
+          style: const TextStyle(fontWeight: FontWeight.bold),
+        ),
+        subtitle: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
           children: [
+            Text(
+              '${transaction.type.toString().split('.').last} - ${FormatUtils.formatDate(transaction.date)}',
+            ),
+            Text(
+              transaction.description!,
+              style: TextStyle(fontSize: 12.sp),
+            ),
+          ],
+        ),
+        trailing: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          crossAxisAlignment: CrossAxisAlignment.end,
+          children: [
+            Text(
+              FormatUtils.formatCurrency(transaction.amount),
+              style: TextStyle(
+                fontWeight: FontWeight.bold,
+                color: transaction.type == TransactionType.subscription 
+                    ? Colors.green 
+                    : Colors.red,
+              ),
+            ),
             Container(
-              padding: EdgeInsets.all(12.w),
+              padding: EdgeInsets.symmetric(horizontal: 8.w, vertical: 4.h),
               decoration: BoxDecoration(
-                color: color.withOpacity(0.1),
+                color: transaction.status == TransactionStatus.completed 
+                    ? Colors.green.withOpacity(0.1)
+                    : Colors.orange.withOpacity(0.1),
                 borderRadius: BorderRadius.circular(12.r),
               ),
-              child: Icon(
-                icon,
-                color: color,
-                size: 24.sp,
-              ),
-            ),
-            SizedBox(width: 16.w),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    transaction.fundName,
-                    style: TextStyle(
-                      fontSize: 16.sp,
-                      fontWeight: FontWeight.w600,
-                    ),
-                  ),
-                  SizedBox(height: 4.h),
-                  Text(
-                    _getTransactionDescription(transaction),
-                    style: TextStyle(
-                      fontSize: 14.sp,
-                      color: Colors.grey[600],
-                    ),
-                  ),
-                  SizedBox(height: 4.h),
-                  Text(
-                    FormatUtils.formatDate(transaction.date),
-                    style: TextStyle(
-                      fontSize: 12.sp,
-                      color: Colors.grey[500],
-                    ),
-                  ),
-                ],
-              ),
-            ),
-            Column(
-              crossAxisAlignment: CrossAxisAlignment.end,
-              children: [
-                Text(
-                  '${isPositive ? '+' : ''}\$${FormatUtils.formatAmount(transaction.amount)}',
-                  style: TextStyle(
-                    fontSize: 16.sp,
-                    fontWeight: FontWeight.bold,
-                    color: color,
-                  ),
+              child: Text(
+                transaction.status.toString().split('.').last,
+                style: TextStyle(
+                  fontSize: 10.sp,
+                  color: transaction.status == TransactionStatus.completed 
+                      ? Colors.green 
+                      : Colors.orange,
                 ),
-                SizedBox(height: 4.h),
-                Container(
-                  padding: EdgeInsets.symmetric(horizontal: 8.w, vertical: 4.h),
-                  decoration: BoxDecoration(
-                    color: color.withOpacity(0.1),
-                    borderRadius: BorderRadius.circular(12.r),
-                  ),
-                  child: Text(
-                    _getTransactionTypeText(transaction.type),
-                    style: TextStyle(
-                      fontSize: 10.sp,
-                      fontWeight: FontWeight.w600,
-                      color: color,
-                    ),
-                  ),
-                ),
-              ],
+              ),
             ),
           ],
         ),
@@ -358,136 +290,76 @@ class _TransactionsViewState extends State<TransactionsView>
   }
 
   Widget _buildAnalytics(TransactionsLoaded state) {
-    return ResponsiveWidget(
-      mobile: _buildMobileAnalytics(state),
-      tablet: _buildTabletAnalytics(state),
-      desktop: _buildDesktopAnalytics(state),
-    );
-  }
+    if (state.transactions.isEmpty) {
+      return const Center(
+        child: Text('No hay datos para analizar'),
+      );
+    }
 
-  Widget _buildMobileAnalytics(TransactionsLoaded state) {
+    final totalAmount = state.transactions.fold<double>(
+      0, (sum, transaction) => sum + transaction.amount
+    );
+    
+    final subscriptionCount = state.transactions
+        .where((t) => t.type == TransactionType.subscription)
+        .length;
+    
+    final cancellationCount = state.transactions
+        .where((t) => t.type == TransactionType.cancellation)
+        .length;
+
     return SingleChildScrollView(
       padding: EdgeInsets.all(16.w),
       child: Column(
         children: [
-          _buildSummaryCards(state),
+          _buildSummaryCards(totalAmount, subscriptionCount, cancellationCount),
           SizedBox(height: 24.h),
-          _buildTransactionsChart(state),
-          SizedBox(height: 24.h),
-          _buildFundPerformanceChart(state),
+          _buildChart(state),
         ],
       ),
     );
   }
 
-  Widget _buildTabletAnalytics(TransactionsLoaded state) {
-    return Padding(
-      padding: EdgeInsets.all(24.w),
-      child: Column(
-        children: [
-          _buildSummaryCards(state),
-          SizedBox(height: 24.h),
-          Expanded(
-            child: Row(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Expanded(
-                  flex: 2,
-                  child: _buildTransactionsChart(state),
-                ),
-                SizedBox(width: 24.w),
-                Expanded(
-                  flex: 1,
-                  child: _buildFundPerformanceChart(state),
-                ),
-              ],
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildDesktopAnalytics(TransactionsLoaded state) {
-    return Padding(
-      padding: EdgeInsets.all(32.w),
-      child: Column(
-        children: [
-          _buildSummaryCards(state),
-          SizedBox(height: 32.h),
-          Expanded(
-            child: Row(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Expanded(
-                  flex: 3,
-                  child: _buildTransactionsChart(state),
-                ),
-                SizedBox(width: 32.w),
-                Expanded(
-                  flex: 1,
-                  child: _buildFundPerformanceChart(state),
-                ),
-              ],
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildSummaryCards(TransactionsLoaded state) {
-    final stats = _calculateStats(state.transactions);
-
-    return GridView.count(
-      shrinkWrap: true,
-      physics: const NeverScrollableScrollPhysics(),
-      crossAxisCount: 2,
-      crossAxisSpacing: 16.w,
-      mainAxisSpacing: 16.h,
-      childAspectRatio: 1.5,
+  Widget _buildSummaryCards(double totalAmount, int subscriptionCount, int cancellationCount) {
+    return Row(
       children: [
-        _buildStatCard(
-          'Total Transacciones',
-          '${stats.totalTransactions}',
-          Icons.receipt,
-          Colors.blue,
+        Expanded(
+          child: _buildSummaryCard(
+            'Total',
+            FormatUtils.formatCurrency(totalAmount),
+            Icons.account_balance_wallet,
+            Colors.blue,
+          ),
         ),
-        _buildStatCard(
-          'Monto Total',
-          '\$${FormatUtils.formatAmount(stats.totalAmount)}',
-          Icons.account_balance_wallet,
-          Colors.green,
+        SizedBox(width: 12.w),
+        Expanded(
+          child: _buildSummaryCard(
+            'Suscripciones',
+            subscriptionCount.toString(),
+            Icons.add_circle,
+            Colors.green,
+          ),
         ),
-        _buildStatCard(
-          'Promedio por Transacción',
-          '\$${FormatUtils.formatAmount(stats.averageAmount)}',
-          Icons.trending_up,
-          Colors.orange,
-        ),
-        _buildStatCard(
-          'Fondos Activos',
-          '${stats.activeFunds}',
-          Icons.check_circle,
-          Colors.purple,
+        SizedBox(width: 12.w),
+        Expanded(
+          child: _buildSummaryCard(
+            'Cancelaciones',
+            cancellationCount.toString(),
+            Icons.remove_circle,
+            Colors.red,
+          ),
         ),
       ],
     );
   }
 
-  Widget _buildStatCard(String title, String value, IconData icon, Color color) {
+  Widget _buildSummaryCard(String title, String value, IconData icon, Color color) {
     return Card(
-      elevation: 2,
       child: Padding(
         padding: EdgeInsets.all(16.w),
         child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Icon(
-              icon,
-              size: 32.sp,
-              color: color,
-            ),
+            Icon(icon, size: 32.sp, color: color),
             SizedBox(height: 8.h),
             Text(
               value,
@@ -495,18 +367,13 @@ class _TransactionsViewState extends State<TransactionsView>
                 fontSize: 18.sp,
                 fontWeight: FontWeight.bold,
               ),
-              textAlign: TextAlign.center,
             ),
-            SizedBox(height: 4.h),
             Text(
               title,
               style: TextStyle(
                 fontSize: 12.sp,
                 color: Colors.grey[600],
               ),
-              textAlign: TextAlign.center,
-              maxLines: 2,
-              overflow: TextOverflow.ellipsis,
             ),
           ],
         ),
@@ -514,38 +381,85 @@ class _TransactionsViewState extends State<TransactionsView>
     );
   }
 
-  Widget _buildTransactionsChart(TransactionsLoaded state) {
-    final chartData = _prepareChartData(state.transactions);
+  Widget _buildChart(TransactionsLoaded state) {
+    if (state.chartData.isEmpty) {
+      return Card(
+        child: Padding(
+          padding: EdgeInsets.all(16.w),
+          child: Center(
+            child: Text(
+              'No hay datos para mostrar en el gráfico',
+              style: TextStyle(
+                fontSize: 16.sp,
+                color: Colors.grey[600],
+              ),
+            ),
+          ),
+        ),
+      );
+    }
 
     return Card(
-      elevation: 2,
       child: Padding(
-        padding: EdgeInsets.all(20.w),
+        padding: EdgeInsets.all(16.w),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Text(
-              'Evolución de Transacciones',
+              state.chartTitle,
               style: TextStyle(
-                fontSize: 18.sp,
+                fontSize: 16.sp,
                 fontWeight: FontWeight.bold,
+              ),
+            ),
+            SizedBox(height: 8.h),
+            Container(
+              padding: EdgeInsets.symmetric(horizontal: 12.w, vertical: 6.h),
+              decoration: BoxDecoration(
+                color: Colors.blue.withOpacity(0.1),
+                borderRadius: BorderRadius.circular(8.r),
+                border: Border.all(color: Colors.blue.withOpacity(0.3)),
+              ),
+              child: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Icon(
+                    Icons.timeline,
+                    size: 16.sp,
+                    color: Colors.blue,
+                  ),
+                  SizedBox(width: 6.w),
+                  Text(
+                    'Orden temporal: Más recientes → Más antiguos',
+                    style: TextStyle(
+                      fontSize: 12.sp,
+                      color: Colors.blue[700],
+                      fontWeight: FontWeight.w500,
+                    ),
+                  ),
+                ],
               ),
             ),
             SizedBox(height: 16.h),
             SizedBox(
               height: 200.h,
-              child: LineChart(
-                LineChartData(
-                  gridData: FlGridData(show: true),
+              child: BarChart(
+                BarChartData(
+                  gridData: const FlGridData(show: true),
                   titlesData: FlTitlesData(
                     leftTitles: AxisTitles(
                       sideTitles: SideTitles(
                         showTitles: true,
-                        reservedSize: 40.w,
+                        reservedSize: 50.w,
                         getTitlesWidget: (value, meta) {
+                          final absValue = value.abs();
+                          final sign = value >= 0 ? '+' : '-';
                           return Text(
-                            '\$${value.toInt()}',
-                            style: TextStyle(fontSize: 10.sp),
+                            '$sign\$${absValue.toInt()}',
+                            style: TextStyle(
+                              fontSize: 10.sp,
+                              color: value >= 0 ? Colors.green : Colors.red,
+                            ),
                           );
                         },
                       ),
@@ -553,249 +467,137 @@ class _TransactionsViewState extends State<TransactionsView>
                     bottomTitles: AxisTitles(
                       sideTitles: SideTitles(
                         showTitles: true,
+                        reservedSize: 50.h,
                         getTitlesWidget: (value, meta) {
-                          if (value.toInt() < chartData.length) {
-                            return Text(
-                              chartData[value.toInt()].label,
-                              style: TextStyle(fontSize: 10.sp),
+                          if (value.toInt() < state.chartData.length) {
+                            final dataPoint = state.chartData[value.toInt()];
+                            return Padding(
+                              padding: EdgeInsets.only(top: 8.h),
+                              child: Column(
+                                children: [
+                                  Text(
+                                    dataPoint.label,
+                                    style: TextStyle(fontSize: 8.sp),
+                                    textAlign: TextAlign.center,
+                                  ),
+                                  if (value.toInt() == 0 && state.chartData.length > 1)
+                                    Container(
+                                      margin: EdgeInsets.only(top: 4.h),
+                                      padding: EdgeInsets.symmetric(horizontal: 4.w, vertical: 2.h),
+                                      decoration: BoxDecoration(
+                                        color: Colors.green.withOpacity(0.2),
+                                        borderRadius: BorderRadius.circular(4.r),
+                                      ),
+                                      child: Text(
+                                        'MÁS RECIENTE',
+                                        style: TextStyle(
+                                          fontSize: 6.sp,
+                                          color: Colors.green[700],
+                                          fontWeight: FontWeight.bold,
+                                        ),
+                                      ),
+                                    ),
+                                  if (value.toInt() == state.chartData.length - 1  && state.chartData.length > 1)
+                                    Container(
+                                      margin: EdgeInsets.only(top: 4.h),
+                                      padding: EdgeInsets.symmetric(horizontal: 4.w, vertical: 2.h),
+                                      decoration: BoxDecoration(
+                                        color: Colors.orange.withOpacity(0.2),
+                                        borderRadius: BorderRadius.circular(4.r),
+                                      ),
+                                      child: Text(
+                                        'MÁS ANTIGUO',
+                                        style: TextStyle(
+                                          fontSize: 6.sp,
+                                          color: Colors.orange[700],
+                                          fontWeight: FontWeight.bold,
+                                        ),
+                                      ),
+                                    ),
+                                ],
+                              ),
                             );
                           }
                           return const Text('');
                         },
                       ),
                     ),
-                    topTitles: AxisTitles(
-                      sideTitles: SideTitles(showTitles: false),
-                    ),
-                    rightTitles: AxisTitles(
-                      sideTitles: SideTitles(showTitles: false),
-                    ),
+                    topTitles: const AxisTitles(sideTitles: SideTitles(showTitles: false)),
+                    rightTitles: const AxisTitles(sideTitles: SideTitles(showTitles: false)),
                   ),
                   borderData: FlBorderData(show: true),
-                  lineBarsData: [
-                    LineChartBarData(
-                      spots: chartData.asMap().entries.map((entry) {
-                        return FlSpot(entry.key.toDouble(), entry.value.value);
-                      }).toList(),
-                      isCurved: true,
-                      color: Theme.of(context).primaryColor,
-                      barWidth: 3,
-                      dotData: FlDotData(show: false),
-                    ),
-                  ],
+                  barGroups: state.chartData.asMap().entries.map((entry) {
+                    final dataPoint = entry.value;
+                    return BarChartGroupData(
+                      x: entry.key,
+                      barRods: [
+                        BarChartRodData(
+                          toY: dataPoint.value,
+                          color: dataPoint.isPositive ? Colors.green : Colors.red,
+                          width: 16.w,
+                          borderRadius: BorderRadius.circular(4.r),
+                        ),
+                      ],
+                    );
+                  }).toList(),
                 ),
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-
-  Widget _buildFundPerformanceChart(TransactionsLoaded state) {
-    final fundData = _prepareFundData(state.transactions);
-
-    return Card(
-      elevation: 2,
-      child: Padding(
-        padding: EdgeInsets.all(20.w),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(
-              'Rendimiento por Fondo',
-              style: TextStyle(
-                fontSize: 18.sp,
-                fontWeight: FontWeight.bold,
               ),
             ),
             SizedBox(height: 16.h),
-            SizedBox(
-              height: 200.h,
-              child: PieChart(
-                PieChartData(
-                  sections: fundData.map((data) {
-                    return PieChartSectionData(
-                      value: data.value,
-                      title: '${data.label}\n${data.value.toStringAsFixed(1)}%',
-                      color: data.color,
-                      radius: 60.r,
-                      titleStyle: TextStyle(
-                        fontSize: 10.sp,
-                        fontWeight: FontWeight.bold,
-                        color: Colors.white,
-                      ),
-                    );
-                  }).toList(),
-                  centerSpaceRadius: 40.r,
-                ),
-              ),
-            ),
+            _buildChartLegend(state.chartData),
           ],
         ),
       ),
     );
   }
 
-  // Métodos auxiliares
-  List<Transaction> _getFilteredTransactions(List<Transaction> transactions) {
-    List<Transaction> filtered = transactions;
-
-    // Aplicar filtro por tipo
-    switch (_selectedFilter) {
-      case 'Suscripciones':
-        filtered = filtered.where((t) => t.type == TransactionType.subscription).toList();
-        break;
-      case 'Cancelaciones':
-        filtered = filtered.where((t) => t.type == TransactionType.cancellation).toList();
-        break;
-      case 'Rendimientos':
-        filtered = filtered.where((t) => t.type == TransactionType.performance).toList();
-        break;
-    }
-
-    // Aplicar filtro por período
-    final now = DateTime.now();
-    switch (_selectedPeriod) {
-      case 'Último mes':
-        filtered = filtered.where((t) => 
-          t.date.isAfter(now.subtract(const Duration(days: 30)))).toList();
-        break;
-      case 'Últimos 3 meses':
-        filtered = filtered.where((t) => 
-          t.date.isAfter(now.subtract(const Duration(days: 90)))).toList();
-        break;
-      case 'Último año':
-        filtered = filtered.where((t) => 
-          t.date.isAfter(now.subtract(const Duration(days: 365)))).toList();
-        break;
-    }
-
-    return filtered;
-  }
-
-  IconData _getTransactionIcon(TransactionType type) {
-    switch (type) {
-      case TransactionType.subscription:
-        return Icons.add_circle;
-      case TransactionType.cancellation:
-        return Icons.remove_circle;
-      case TransactionType.performance:
-        return Icons.trending_up;
-    }
-  }
-
-  String _getTransactionDescription(Transaction transaction) {
-    switch (transaction.type) {
-      case TransactionType.subscription:
-        return 'Suscripción realizada';
-      case TransactionType.cancellation:
-        return 'Suscripción cancelada';
-      case TransactionType.performance:
-        return 'Rendimiento generado';
-    }
-  }
-
-  String _getTransactionTypeText(TransactionType type) {
-    switch (type) {
-      case TransactionType.subscription:
-        return 'SUSCRIPCIÓN';
-      case TransactionType.cancellation:
-        return 'CANCELACIÓN';
-      case TransactionType.performance:
-        return 'RENDIMIENTO';
-    }
-  }
-
-  List<ChartData> _prepareChartData(List<Transaction> transactions) {
-    // Agrupar transacciones por fecha y calcular totales
-    final Map<String, double> dailyTotals = {};
-    
-    for (final transaction in transactions) {
-      final dateKey = FormatUtils.formatDate(transaction.date);
-      dailyTotals[dateKey] = (dailyTotals[dateKey] ?? 0) + transaction.amount;
-    }
-
-    // Convertir a lista ordenada
-    final sortedEntries = dailyTotals.entries.toList()
-      ..sort((a, b) => a.key.compareTo(b.key));
-
-    return sortedEntries.map((entry) {
-      return ChartData(entry.key, entry.value);
-    }).toList();
-  }
-
-  List<FundData> _prepareFundData(List<Transaction> transactions) {
-    // Agrupar por fondo y calcular rendimientos
-    final Map<String, double> fundTotals = {};
-    
-    for (final transaction in transactions) {
-      if (transaction.type == TransactionType.performance) {
-        fundTotals[transaction.fundName] = 
-          (fundTotals[transaction.fundName] ?? 0) + transaction.amount;
-      }
-    }
-
-    final total = fundTotals.values.fold(0.0, (sum, value) => sum + value);
-    final colors = [Colors.blue, Colors.green, Colors.orange, Colors.purple, Colors.red];
-
-    return fundTotals.entries.map((entry) {
-      final percentage = total > 0 ? (entry.value / total) * 100 : 0;
-      final colorIndex = fundTotals.keys.toList().indexOf(entry.key) % colors.length;
-      
-      return FundData(
-        entry.key,
-        percentage.toDouble(),
-        colors[colorIndex],
-      );
-    }).toList();
-  }
-
-  TransactionStats _calculateStats(List<Transaction> transactions) {
-    final totalTransactions = transactions.length;
-    final totalAmount = transactions.fold(0.0, (sum, t) => sum + t.amount);
-    final averageAmount = totalTransactions > 0 ? totalAmount / totalTransactions : 0;
-    final activeFunds = transactions
-        .where((t) => t.type == TransactionType.subscription)
-        .map((t) => t.fundName)
-        .toSet()
-        .length;
-
-    return TransactionStats(
-      totalTransactions: totalTransactions,
-      totalAmount: totalAmount,
-      averageAmount: averageAmount.toDouble(),
-      activeFunds: activeFunds,
+  Widget _buildChartLegend(List<ChartDataPoint> chartData) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          'Detalles:',
+          style: TextStyle(
+            fontSize: 14.sp,
+            fontWeight: FontWeight.bold,
+          ),
+        ),
+        SizedBox(height: 8.h),
+        ...chartData.take(5).map((dataPoint) => Padding(
+          padding: EdgeInsets.only(bottom: 4.h),
+          child: Row(
+            children: [
+              Container(
+                width: 12.w,
+                height: 12.h,
+                decoration: BoxDecoration(
+                  color: dataPoint.isPositive ? Colors.green : Colors.red,
+                  borderRadius: BorderRadius.circular(6.r),
+                ),
+              ),
+              SizedBox(width: 8.w),
+              Expanded(
+                child: Text(
+                  '${dataPoint.label}: ${dataPoint.value >= 0 ? '+' : ''}\$${dataPoint.value.toStringAsFixed(0)}',
+                  style: TextStyle(
+                    fontSize: 12.sp,
+                    color: dataPoint.isPositive ? Colors.green : Colors.red,
+                  ),
+                ),
+              ),
+            ],
+          ),
+        )),
+        if (chartData.length > 5)
+          Text(
+            '... y ${chartData.length - 5} más',
+            style: TextStyle(
+              fontSize: 12.sp,
+              color: Colors.grey[600],
+              fontStyle: FontStyle.italic,
+            ),
+          ),
+      ],
     );
   }
-}
-
-// Clases auxiliares
-class ChartData {
-  final String label;
-  final double value;
-
-  ChartData(this.label, this.value);
-}
-
-class FundData {
-  final String label;
-  final double value;
-  final Color color;
-
-  FundData(this.label, this.value, this.color);
-}
-
-class TransactionStats {
-  final int totalTransactions;
-  final double totalAmount;
-  final double averageAmount;
-  final int activeFunds;
-
-  TransactionStats({
-    required this.totalTransactions,
-    required this.totalAmount,
-    required this.averageAmount,
-    required this.activeFunds,
-  });
 }
